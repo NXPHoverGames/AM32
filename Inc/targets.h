@@ -36,6 +36,11 @@
 // #define GD32SKYSTARS40
 #endif
 
+//TODO remove when finished debugging
+#ifndef FRDM_A153
+#define FRDM_A153
+#endif
+
 // used to hold a port/pin in a single 16 bit integer
 #define GPIO_PORT_PIN(portnum, pinnum) ((portnum)<<8|(pinnum))
 

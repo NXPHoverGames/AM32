@@ -613,11 +613,11 @@ void loadEEpromSettings()
             min_startup_duty = (eepromBuffer.startup_power) *2 ;
             minimum_duty_cycle = (eepromBuffer.startup_power / 2);
             stall_protect_minimum_duty = minimum_duty_cycle + 10;
-			}else{
+		}else{
             min_startup_duty = (eepromBuffer.startup_power);
             minimum_duty_cycle = (eepromBuffer.startup_power / 3);
             stall_protect_minimum_duty = minimum_duty_cycle + 10;
-			}
+		}
     } else {
         min_startup_duty = 150;
         minimum_duty_cycle = (min_startup_duty / 2) + 10;
@@ -693,6 +693,7 @@ void loadEEpromSettings()
     		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(DEAD_TIME);	//PWMB deadtime
     	}
 #endif
+        }
 
         if (eepromBuffer.limits.temperature < 70 || eepromBuffer.limits.temperature > 140) {
             eepromBuffer.limits.temperature = 255;
