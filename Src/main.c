@@ -423,7 +423,11 @@ uint16_t ADC_smoothed_input = 0;
 uint8_t degrees_celsius;
 int16_t converted_degrees;
 uint8_t temperature_offset;
+#ifdef NXP	//TODO make raw temperature of 32-bit
+uint16_t ADC_raw_temp[2] = {0};
+#else
 uint16_t ADC_raw_temp;
+#endif
 uint16_t ADC_raw_volts;
 uint16_t ADC_raw_current;
 uint16_t ADC_raw_input;
@@ -680,7 +684,16 @@ void loadEEpromSettings()
 #ifdef GIGADEVICES
         TIMER_CCHP(TIMER0) |= dead_time_override;
 #endif
-        }
+#ifdef NXP
+    	for (int submodule = 0; submodule <= 2; submodule++) {
+    		//TODO fix this
+//    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(dead_time_override);	//PWMA deadtime
+//    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(dead_time_override);	//PWMB deadtime
+    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(DEAD_TIME);	//PWMA deadtime
+    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(DEAD_TIME);	//PWMB deadtime
+    	}
+#endif
+
         if (eepromBuffer.limits.temperature < 70 || eepromBuffer.limits.temperature > 140) {
             eepromBuffer.limits.temperature = 255;
         }
@@ -765,7 +778,22 @@ void getBemfState()
     if (step == 3 || step == 6) { // phase B pf0
         current_state = PHASE_B_EXTI_PORT->IDR & PHASE_B_EXTI_PIN;
     }
+#elif defined(NXP)
+    if (step == 1 || step == 4) {
+    	//Phase C
+    	current_state = GPIO2->PDR[3];
+    }
+    if (step == 2 || step == 5) {
+    	//Phase A
+    	current_state = GPIO1->PDR[4];
+    }
+    if (step == 3 || step == 6) {
+    	//Phase B
+    	current_state = GPIO1->PDR[5];
+    }
 #else
+    //TODO fix this getCompOutputLevel.
+    //The comparator is not working so it always output 1 or 0 here depending on which comp unit it uses.
     current_state = !getCompOutputLevel(); // polarity reversed
 #endif
     if (rising) {
@@ -827,6 +855,12 @@ void commutate()
 #endif
 }
 
+/*
+ * @brief 	Called by the COM_TIMER interrupt handler after the set wait time
+ * 			This computes how much to advance in a commutation step.
+ * 			This disables the COM_TIMER interrupt.
+ * 			Then it enables the comparator to generate its interrupt.
+ */
 void PeriodElapsedCallback()
 {
     DISABLE_COM_TIMER_INT(); // disable interrupt
@@ -846,6 +880,11 @@ void PeriodElapsedCallback()
     }
 }
 
+/*
+ * @brief 	Called by the comparator interrupt handler.
+ * 			Disables the comparator interrupt.
+ * 			Enables the COM_TIMER and sets it to generate an interrupt after the wait time.
+ */
 void interruptRoutine()
 {
    if (average_interval > 125) {
@@ -1494,6 +1533,10 @@ void zcfoundroutine()
 #ifdef MCU_AT32
 		COM_TIMER->pr = waitTime;
 #endif
+#ifdef NXP
+	COM_TIMER->MSR[0] = waitTime;
+#endif
+
     commutate();
     bemfcounter = 0;
     bad_count = 0;
@@ -1619,6 +1662,30 @@ int main(void)
 
     loadEEpromSettings();
 
+    eepromBuffer.eeprom_version = 2;
+    eepromBuffer.version.major = 1;
+    eepromBuffer.version.minor = 23;
+    eepromBuffer.comp_pwm = 1;
+    eepromBuffer.variable_pwm = 1;
+
+    eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
+    eepromBuffer.advance_level = 2;
+    eepromBuffer.pwm_frequency = 24;
+    eepromBuffer.startup_power = 100;
+    eepromBuffer.motor_kv = 100;//55;
+    eepromBuffer.motor_poles = 12;//14;
+    eepromBuffer.beep_volume = 5;
+    eepromBuffer.servo.low_threshold = 128;
+    eepromBuffer.servo.high_threshold = 128;
+    eepromBuffer.servo.neutral = 128;
+    eepromBuffer.servo.dead_band = 50;
+    eepromBuffer.low_cell_volt_cutoff = 50;
+    eepromBuffer.sine_mode_changeover_thottle_level = 15;
+    eepromBuffer.drag_brake_strength = 10;
+    eepromBuffer.driving_brake_strength = 10;
+    eepromBuffer.limits.temperature = 141;
+    eepromBuffer.limits.current = 102;
+    eepromBuffer.sine_mode_power = 6;
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || eeprom_layout_version > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;
         eepromBuffer.version.minor = VERSION_MINOR;
@@ -1756,7 +1823,8 @@ int main(void)
 #if defined(FIXED_DUTY_MODE) || defined(FIXED_SPEED_MODE)
         setInput();
 #endif
-#ifdef MCU_F031
+#if defined(MCU_F031) || defined(NXP)
+        //TODO add our NXP here. Use input_ready for Dshot
         if (input_ready) {
             processDshot();
             input_ready = 0;
@@ -1887,6 +1955,19 @@ if(zero_crosses < 5){
         }
 
 #ifndef MCU_F031
+#ifdef NXP
+        if (dshot_telemetry && (commutation_interval > DSHOT_PRIORITY_THRESHOLD)) {
+            NVIC_SetPriority(IC_DMA_IRQ_NAME, 0);
+            NVIC_SetPriority(COM_TIMER_IRQ, 1);
+            NVIC_SetPriority(COMP0_IRQ, 1);
+            NVIC_SetPriority(COMP1_IRQ, 1);
+        } else {
+            NVIC_SetPriority(IC_DMA_IRQ_NAME, 1);
+            NVIC_SetPriority(COM_TIMER_IRQ, 0);
+            NVIC_SetPriority(COMP0_IRQ, 0);
+            NVIC_SetPriority(COMP1_IRQ, 0);
+        }
+#else
         if (dshot_telemetry && (commutation_interval > DSHOT_PRIORITY_THRESHOLD)) {
             NVIC_SetPriority(IC_DMA_IRQ_NAME, 0);
             NVIC_SetPriority(COM_TIMER_IRQ, 1);
@@ -1896,6 +1977,7 @@ if(zero_crosses < 5){
             NVIC_SetPriority(COM_TIMER_IRQ, 0);
             NVIC_SetPriority(COMPARATOR_IRQ, 0);
         }
+#endif
 #endif
         if (send_telemetry) {
 #ifdef USE_SERIAL_TELEMETRY
@@ -1921,6 +2003,18 @@ if(zero_crosses < 5){
             ADC_DMA_Callback();
             adc_ordinary_software_trigger_enable(ADC1, TRUE);
             converted_degrees = getConvertedDegrees(ADC_raw_temp);
+#endif
+#ifdef NXP
+            //TODO add NXP define check and call ADC DMA Callback
+            //Call ADC_DMA callback to get raw data
+            ADC_DMA_Callback();
+
+            //Convert temperature data to actual temperature in degrees Celsius
+            converted_degrees = computeTemperature(ADC_raw_temp[0], ADC_raw_temp[1]);
+//            converted_degrees = 0;
+
+            //Start ADC conversion
+            startADCConversion();
 #endif
             degrees_celsius = converted_degrees;
             battery_voltage = ((7 * battery_voltage) + ((ADC_raw_volts * 3300 / 4095 * VOLTAGE_DIVIDER) / 100)) >> 3;

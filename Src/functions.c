@@ -58,6 +58,9 @@ static inline uint16_t get_timer_us16(void) {
     return TIMER_CNT(UTILITY_TIMER);
 #elif defined(ARTERY)
     return UTILITY_TIMER->cval;
+#elif defined(NXP)
+    //Return systick timer count value
+    return SysTick->VAL;
 #else
     #error unsupported MCU
 #endif
@@ -69,8 +72,14 @@ static inline uint16_t get_timer_us16(void) {
 void delayMicros(uint32_t micros)
 {
     const uint16_t cval_start = get_timer_us16();
+#ifdef NXP
+    //Systick timer counts down so mirror subtraction
+    while ((uint16_t)(cval_start - get_timer_us16()) < (uint16_t)micros) {
+    }
+#else
     while ((uint16_t)(get_timer_us16() - cval_start) < (uint16_t)micros) {
     }
+#endif
 }
 
 /*

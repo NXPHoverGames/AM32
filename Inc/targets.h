@@ -1833,6 +1833,20 @@
 #define VOLTAGE_ADC_CHANNEL LL_ADC_CHANNEL_7
 #endif
 
+//FRDM_MCXA153 TODO fill in correct data
+#ifdef FRDM_A153
+#define FILE_NAME				"FRDM_A153"
+#define FIRMWARE_NAME           "FRDM_MCXA153"
+#define DEAD_TIME               70
+#define HARDWARE_GROUP_NXP_MCXA153
+#define TARGET_VOLTAGE_DIVIDER  210
+#define CURRENT_OFFSET          498
+#define MILLIVOLT_PER_AMP        16
+#define USE_SERIAL_TELEMETRY
+#define USE_INTERNAL_AMP
+#define RESET 					0 //TODO find out what to do with this
+#endif
+
 #ifndef FIRMWARE_NAME
 /* if you get this then you have forgotten to add the section for your target above */
 #error "Missing defines for target"
@@ -3395,6 +3409,69 @@
 
 #endif
 
+//TODO add correct data
+#ifdef     HARDWARE_GROUP_NXP_MCXA153
+
+#define    MCU_A153
+
+//This is the Dshot/PWM input pin
+#define    INPUT_PIN            	2
+#define    INPUT_PIN_PORT        	PORT1
+#define    INPUT_PIN_GPIO			GPIO1
+
+//This is the Dshot/PWM timer
+#define    IC_TIMER_CHANNEL    		LL_TIM_CHANNEL_CH1 //TODO is this needed for us?
+#define    IC_TIMER_REGISTER    	CTIMER0
+
+//This is the DMA used for the Dshot/PWM data transfer
+#define    INPUT_DMA_CHANNEL       	0 				//DMA channel 0
+#define    IC_DMA_IRQ_NAME         	DMA_CH0_IRQn
+
+//TODO set correct port pins
+#define PHASE_A_PIN_LOW       		7 //0	//Pin number
+#define PHASE_A_PORT_LOW   			PORT3	//PORT number
+#define PHASE_A_GPIO_LOW   			GPIO3	//GPIO number
+#define PHASE_A_PIN_HIGH       		6 //1
+#define PHASE_A_PORT_HIGH    		PORT3
+#define PHASE_A_GPIO_HIGH			GPIO3
+
+#define PHASE_B_PIN_LOW         	9
+#define PHASE_B_PORT_LOW     		PORT3
+#define PHASE_B_GPIO_LOW			GPIO3
+#define PHASE_B_PIN_HIGH      		8
+#define PHASE_B_PORT_HIGH   		PORT3
+#define PHASE_B_GPIO_HIGH			GPIO3
+
+#define PHASE_C_PIN_LOW       		11
+#define PHASE_C_PORT_LOW   			PORT3
+#define PHASE_C_GPIO_LOW			GPIO3
+#define PHASE_C_PIN_HIGH   			10
+#define PHASE_C_PORT_HIGH			PORT3
+#define PHASE_C_GPIO_HIGH			GPIO3
+
+#define PHASE_A_COMP_INP  	3  		//P1.0 COMP0_IN3
+#define PHASE_A_COMP_UNIT 	CMP0
+#define PHASE_B_COMP_INP  	3  		//P1.1 COMP1_IN3
+#define PHASE_B_COMP_UNIT 	CMP1
+#define PHASE_C_COMP_INP  	1  		//P1.3 COMP0_IN1
+#define PHASE_C_COMP_UNIT 	CMP0
+//#define PHASE_COMP_PORT 	PORT1
+
+#define COMMON_COMP0_INP	0		//P2.2 COMP0_IN0
+#define COMMON_COMP1_INP	0		//P2.3 COMP1_IN0
+//#define COMMON_COMP_PORT	PORT2
+
+//TODO set correct ADC pins and channels
+#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.12
+#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.16
+#define SENSE_ADC_PORT 				PORT2
+
+#define CURRENT_ADC_CHANNEL         4//5
+#define VOLTAGE_ADC_CHANNEL         1//6
+#define TEMP_ADC_CHANNEL 			26
+
+#endif
+
 /************************************ MCU COMMON PERIPHERALS
  * **********************************************/
 
@@ -3600,6 +3677,40 @@
 #define COM_TIMER_IRQ TIM1_UP_TIM16_IRQn
 #define DSHOT_PRIORITY_THRESHOLD 60
 #define COMPARATOR_IRQ COMP_IRQn
+#define USE_ADC
+#endif
+
+//TODO add correct data
+#ifdef MCU_A153
+//#define STMICRO
+#define NXP
+#define CPU_FREQUENCY_MHZ   192
+#ifndef EEPROM_START_ADD
+#define EEPROM_START_ADD  (uint32_t)0x0800F800
+#endif
+//TODO assign correct timer functions to timers
+#define INTERVAL_TIMER     CTIMER2
+#define TEN_KHZ_TIMER      LPTMR0
+#define UTILITY_TIMER      SysTick
+#define COM_TIMER          CTIMER1
+#define TIM1_AUTORELOAD    8000		//Reloads the PWM at 24kHz
+
+//Define the DMA channels used
+#define DMA_CH_DshotPWM			0
+#define DMA_CH_DshotPWM_IRQ		DMA_CH0_IRQn
+#define DMA_CH_ADC				1
+#define DMA_CH_ADC_IRQ			DMA_CH1_IRQn
+#define DMA_CH_UART				2
+#define DMA_CH_UART_IRQ			DMA_CH2_IRQn
+
+#ifndef TARGET_MIN_BEMF_COUNTS
+#define TARGET_MIN_BEMF_COUNTS 3
+#endif
+//TODO Set to correct interrupt routines
+#define COM_TIMER_IRQ 				CTIMER1_IRQn
+#define DSHOT_PRIORITY_THRESHOLD 	60
+#define COMP0_IRQ 					CMP0_IRQn
+#define COMP1_IRQ 					CMP1_IRQn
 #define USE_ADC
 #endif
 

@@ -30,6 +30,9 @@ extern uint16_t battery_voltage;
 extern int16_t actual_current;
 extern uint16_t e_rpm;
 
+#ifdef NXP
+extern char input_ready;
+#endif
 
 #ifdef STMICRO
 extern GPIO_TypeDef* current_GPIO_PORT;
