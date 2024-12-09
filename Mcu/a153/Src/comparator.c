@@ -144,12 +144,6 @@ void changeMainComp(LPCMP_Type *CMPx)
 
 	if (MAIN_COMP != prev_MAIN_COMP)
 	{
-//		//Copy previous interrupt enable register to new comparator unit
-//		MAIN_COMP->IER = prev_MAIN_COMP->IER;
-//
-//		//Clear previous comparator unit interrupt enable register
-//		prev_MAIN_COMP->IER = 0;
-
 		//Enable and disable correct comparator interrupt
 		if (MAIN_COMP == CMP0)
 		{
@@ -210,7 +204,6 @@ void changeCompInput()
 
 	//Enable main comparator unit after control register fields have been adjusted
 	enableComparator();
-//	delayMicros(40);
 
 	//Check if BEMF is rising or falling
 	if (rising)

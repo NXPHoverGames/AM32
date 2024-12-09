@@ -277,8 +277,8 @@ void enableCorePeripherals()
 
 	//Enable the timers
 #ifndef USE_ADC_INPUT
-	enableDshotPWMTimer();
-	enableDMA_DshotPWM();
+//	enableDshotPWMTimer();
+//	enableDMA_DshotPWM();
 #endif
 #ifndef BRUSHED_MODE
 	enableComTimer();

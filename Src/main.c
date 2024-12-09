@@ -260,7 +260,7 @@ void zcfoundroutine(void);
 //TODO use this to bypass Dshot for testing
 #define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
 // using the speed control loop PID 
-#define FIXED_SPEED_MODE_RPM  2000  //
+#define FIXED_SPEED_MODE_RPM  5000  //
 // intended final rpm , ensure pole pair numbers are entered correctly in config
 // tool.
 
@@ -687,11 +687,8 @@ void loadEEpromSettings()
 #endif
 #ifdef NXP
     	for (int submodule = 0; submodule <= 2; submodule++) {
-    		//TODO fix this
     		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(dead_time_override);	//PWMA deadtime
     		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(dead_time_override);	//PWMB deadtime
-//    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(DEAD_TIME);	//PWMA deadtime
-//    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(DEAD_TIME);	//PWMB deadtime
     	}
 #endif
         }
@@ -781,7 +778,7 @@ void getBemfState()
         current_state = PHASE_B_EXTI_PORT->IDR & PHASE_B_EXTI_PIN;
     }
 #else
-    //TODO hopefully this works as I tested it in the example
+    //Get current comparator output level
     current_state = !getCompOutputLevel(); // polarity reversed
 #endif
     if (rising) {
@@ -861,8 +858,6 @@ void PeriodElapsedCallback()
     }
     waitTime = (commutation_interval >> 1) - advance;
     if (!old_routine) {
-    	//TODO remove this
-    	GPIO3->PTOR = (1 << 30);
         enableCompInterrupts(); // enable comp interrupt
     }
     if (zero_crosses < 10000) {
@@ -899,8 +894,6 @@ void interruptRoutine()
             }
         }
     __disable_irq();
-	//TODO remove this
-	GPIO3->PTOR = (1 << 31);
 	maskPhaseInterrupts();
 	thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
@@ -1149,7 +1142,7 @@ if (!stepper_sine && armed) {
             if (!eepromBuffer.comp_pwm) {
                 duty_cycle_setpoint = 0;
                 if (!running) {
-                    old_routine = 1;
+                	old_routine = 1;
                     zero_crosses = 0;
                     if (eepromBuffer.brake_on_stop) {
                         fullBrake();
@@ -1171,7 +1164,6 @@ if (!stepper_sine && armed) {
                 }
             } else {
                 if (!running) {
-
                     old_routine = 1;
                     zero_crosses = 0;
                     bad_count = 0;
@@ -1308,8 +1300,6 @@ void tenKhzRoutine()
             maskPhaseInterrupts();
             getBemfState();
             if (!zcfound) {
-            	//TODO remove this
-            	GPIO2->PTOR = (1 << 0);
                 if (rising) {
                     if (bemfcounter > min_bemf_counts_up) {
                         zcfound = 1;
@@ -1542,8 +1532,10 @@ void zcfoundroutine()
             enableCompInterrupts(); // enable interrupt
         }
     } else {
-       if (zero_crosses > 30) {
-            old_routine = 0;
+//       if (zero_crosses > 30)
+    	if (commutation_interval < 2000)
+    	{
+    		old_routine = 0;
             enableCompInterrupts(); // enable interrupt
         }
     }
@@ -1663,11 +1655,11 @@ int main(void)
     eepromBuffer.variable_pwm = 1;
 
     eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
-    eepromBuffer.advance_level = 1;//2;
+    eepromBuffer.advance_level = 2;
     eepromBuffer.pwm_frequency = 24;
-    eepromBuffer.startup_power = 50;
-    eepromBuffer.motor_kv = 250;
-    eepromBuffer.motor_poles = 12;//14;
+    eepromBuffer.startup_power = 10;
+    eepromBuffer.motor_kv = 10;
+    eepromBuffer.motor_poles = 14;//14;
     eepromBuffer.beep_volume = 5;
     eepromBuffer.servo.low_threshold = 128;
     eepromBuffer.servo.high_threshold = 128;
@@ -2000,7 +1992,6 @@ if(zero_crosses < 5){
             converted_degrees = getConvertedDegrees(ADC_raw_temp);
 #endif
 #ifdef NXP
-            //TODO add NXP define check and call ADC DMA Callback
             //Call ADC_DMA callback to get raw data
             ADC_DMA_Callback();
 

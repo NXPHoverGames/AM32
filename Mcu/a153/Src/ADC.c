@@ -227,6 +227,7 @@ void ADC_DMA_Callback()
 
 int16_t computeTemperature(uint16_t raw_temp_val1, uint16_t raw_temp_val2)
 {
+	//TODO fix this computation, currently it is not correct
 	float tmp = (float)slopeFactor * ((bandgapCoefficient * ((float)raw_temp_val2 - (float)raw_temp_val1)) / ((float)raw_temp_val2 + (bandgapCoefficient * ((float)raw_temp_val2 - (float)raw_temp_val1)))) - offsetFactor;
 
 	return (int16_t)tmp;

@@ -415,68 +415,41 @@ void allOff()
 
 void comStep(char newStep)
 {
-//	//Toggle P3.14 output
-//	GPIO3->PTOR = (1 << 14);
-
     switch (newStep) {
     case 1: // A-B
         phaseCFLOAT();
         phaseBLOW();
         phaseAPWM();
-
-//        GPIO2->PSOR = (1 << 6);
-//        GPIO3->PCOR = (1 << 14);
-//        GPIO3->PCOR = (1 << 15);
         break;
 
     case 2: // C-B
         phaseAFLOAT();
         phaseBLOW();
         phaseCPWM();
-
-//        GPIO2->PCOR = (1 << 6);
-//        GPIO3->PSOR = (1 << 14);
-//        GPIO3->PCOR = (1 << 15);
         break;
 
     case 3: // C-A
         phaseBFLOAT();
         phaseALOW();
         phaseCPWM();
-
-//        GPIO2->PSOR = (1 << 6);
-//        GPIO3->PSOR = (1 << 14);
-//        GPIO3->PCOR = (1 << 15);
         break;
 
     case 4: // B-A
         phaseCFLOAT();
         phaseALOW();
         phaseBPWM();
-
-//        GPIO2->PCOR = (1 << 6);
-//        GPIO3->PCOR = (1 << 14);
-//        GPIO3->PSOR = (1 << 15);
         break;
 
     case 5: // B-C
         phaseAFLOAT();
         phaseCLOW();
         phaseBPWM();
-
-//        GPIO2->PSOR = (1 << 6);
-//        GPIO3->PCOR = (1 << 14);
-//        GPIO3->PSOR = (1 << 15);
         break;
 
     case 6: // A-C
         phaseBFLOAT();
         phaseCLOW();
         phaseAPWM();
-
-//        GPIO2->PCOR = (1 << 6);
-//        GPIO3->PSOR = (1 << 14);
-//        GPIO3->PSOR = (1 << 15);
         break;
     }
 }
