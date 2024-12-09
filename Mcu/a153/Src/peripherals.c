@@ -157,31 +157,30 @@ void initGPIO(void)
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO2(1);
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO3(1);
 
-	//Enable GPIO pins for testing/debugging. P3.15, P3.14, P2.6. Set them to output
-	modifyReg32(&PORT2->PCR[6],
+	//Enable GPIO pins for testing/debugging. P3.30, P3.31, P2.0, P1.13. Set them to output
+	modifyReg32(&PORT3->PCR[30],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO2->PDDR, 0, (1 << 6));
-	GPIO2->PCOR = (1 << 6);
+	modifyReg32(&GPIO3->PDDR, 0, (1 << 30));
+	GPIO3->PCOR = (1 << 30);
 
-	modifyReg32(&PORT2->PCR[13],
+	modifyReg32(&PORT3->PCR[31],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO2->PDDR, 0, (1 << 13));
-	GPIO2->PCOR = (1 << 13);
+	modifyReg32(&GPIO3->PDDR, 0, (1 << 31));
+	GPIO3->PCOR = (1 << 31);
 
-	modifyReg32(&PORT3->PCR[14],
+	modifyReg32(&PORT2->PCR[0],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO3->PDDR, 0, (1 << 14));
-	GPIO3->PCOR = (1 << 14);
+	modifyReg32(&GPIO2->PDDR, 0, (1 << 0));
+	GPIO2->PCOR = (1 << 0);
 
-	modifyReg32(&PORT3->PCR[15],
+	modifyReg32(&PORT1->PCR[13],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO3->PDDR, 0, (1 << 15));
-	GPIO3->PCOR = (1 << 15);
-
+	modifyReg32(&GPIO1->PDDR, 0, (1 << 13));
+	GPIO1->PCOR = (1 << 13);
 }
 
 /*

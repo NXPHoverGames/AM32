@@ -3454,19 +3454,19 @@
 #define PHASE_C_PORT_HIGH			PORT3
 #define PHASE_C_GPIO_HIGH			GPIO3
 
-#define PHASE_A_COMP_INP  	3  		//P1.0 COMP0_IN3
+#define PHASE_A_COMP_INP  	2  		//P1.4 COMP0_IN2
 #define PHASE_A_COMP_UNIT 	CMP0
-#define PHASE_B_COMP_INP  	3  		//P1.1 COMP1_IN3
+#define PHASE_B_COMP_INP  	2  		//P1.5 COMP1_IN2
 #define PHASE_B_COMP_UNIT 	CMP1
-#define PHASE_C_COMP_INP  	1  		//P1.3 COMP0_IN1
-#define PHASE_C_COMP_UNIT 	CMP0
+#define PHASE_C_COMP_INP  	0  		//P2.3 COMP1_IN0
+#define PHASE_C_COMP_UNIT 	CMP1
 
-#define COMMON_COMP0_INP	0		//P2.2 COMP0_IN0
-#define COMMON_COMP1_INP	0		//P2.3 COMP1_IN0
+#define COMMON_COMP0_INP	3		//P1.0 COMP0_IN3
+#define COMMON_COMP1_INP	3		//P1.1 COMP1_IN3
 
 //TODO set correct ADC pins and channels
-#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.12
-#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.16
+#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.2
+#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.1
 #define SENSE_ADC_PORT 				PORT2
 
 #define CURRENT_ADC_CHANNEL         4//5

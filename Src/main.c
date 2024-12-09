@@ -862,7 +862,7 @@ void PeriodElapsedCallback()
     waitTime = (commutation_interval >> 1) - advance;
     if (!old_routine) {
     	//TODO remove this
-    	GPIO3->PTOR = (1 << 15);
+    	GPIO3->PTOR = (1 << 30);
         enableCompInterrupts(); // enable comp interrupt
     }
     if (zero_crosses < 10000) {
@@ -900,7 +900,7 @@ void interruptRoutine()
         }
     __disable_irq();
 	//TODO remove this
-	GPIO3->PTOR = (1 << 14);
+	GPIO3->PTOR = (1 << 31);
 	maskPhaseInterrupts();
 	thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
@@ -1309,7 +1309,7 @@ void tenKhzRoutine()
             getBemfState();
             if (!zcfound) {
             	//TODO remove this
-            	GPIO2->PTOR = (1 << 13);
+            	GPIO2->PTOR = (1 << 0);
                 if (rising) {
                     if (bemfcounter > min_bemf_counts_up) {
                         zcfound = 1;
@@ -1663,10 +1663,10 @@ int main(void)
     eepromBuffer.variable_pwm = 1;
 
     eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
-    eepromBuffer.advance_level = 2;
+    eepromBuffer.advance_level = 1;//2;
     eepromBuffer.pwm_frequency = 24;
-    eepromBuffer.startup_power = 100;
-    eepromBuffer.motor_kv = 55;
+    eepromBuffer.startup_power = 50;
+    eepromBuffer.motor_kv = 250;
     eepromBuffer.motor_poles = 12;//14;
     eepromBuffer.beep_volume = 5;
     eepromBuffer.servo.low_threshold = 128;
