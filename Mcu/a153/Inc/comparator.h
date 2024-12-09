@@ -13,6 +13,7 @@
 void initComp0(void);
 void initComp1(void);
 void enableComparator(void);
+void disableComparators(void);
 uint8_t getCompOutputLevel();
 void maskPhaseInterrupts();
 void enableCompInterrupts();

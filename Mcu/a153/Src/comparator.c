@@ -6,6 +6,7 @@
  */
 
 #include "comparator.h"
+#include "functions.h"
 
 LPCMP_Type *MAIN_COMP = CMP0;
 
@@ -34,17 +35,11 @@ void initComp0(void)
 	//clock source 3: CMPn function clock as defined in MRCC_CMP0_RR_CLKSEL
 	modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FUNC_CLK_SEL_MASK, LPCMP_CCR1_FUNC_CLK_SEL(3));
 
-	//Select CMP0_IN3 as minus input
-//	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_MSEL_MASK, LPCMP_CCR2_MSEL(3));
-
 	//Select CMP0_IN0 as plus input (BEMF_COMMON)
 	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP0_INP));
 
-	//Enable high power speed comparison mode
-//	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
-
-	//Enable rising and falling interrupt
-//	modifyReg32(&CMP0->IER, 0, LPCMP_IER_CFR_IE(1) | LPCMP_IER_CFF_IE(1));
+	//Enable high speed comparator mode
+	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
 }
 
 void initComp1(void)
@@ -75,26 +70,30 @@ void initComp1(void)
 	//clock source 3: CMPn function clock as defined in MRCC_CMP1_RR_CLKSEL
 	modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FUNC_CLK_SEL_MASK, LPCMP_CCR1_FUNC_CLK_SEL(3));
 
-	//Select CMP1_IN3 as minus input
-//	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_MSEL_MASK, LPCMP_CCR2_MSEL(3));
-
 	//Select CMP1_IN0 as plus input (BEMF_COMMON)
 	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP1_INP));
 
-	//Enable high power speed comparison mode
-//	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
-
-	//Enable rising and falling interrupt
-//	modifyReg32(&CMP1->IER, 0, LPCMP_IER_CFR_IE(1) | LPCMP_IER_CFF_IE(1));
+	//Enable high speed comparator mode
+	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
 }
 
+/*
+ * @brief 	Enables only the main selected comparator unit
+ */
 void enableComparator(void)
 {
-	//Enable comparator 0
-	modifyReg32(&CMP0->CCR0, 0, LPCMP_CCR0_CMP_EN(1));
+	//Enable the selected comparator unit
+	modifyReg32(&MAIN_COMP->CCR0, 0, LPCMP_CCR0_CMP_EN(1));
+}
 
-	//Enable comparator 1
-	modifyReg32(&CMP1->CCR0, 0, LPCMP_CCR0_CMP_EN(1));
+/*
+ * @brief 	Disables both comparator units
+ */
+void disableComparators(void)
+{
+	//Disable comparator 0 and 1
+	modifyReg32(&CMP0->CCR0, LPCMP_CCR0_CMP_EN(1), 0);
+	modifyReg32(&CMP1->CCR0, LPCMP_CCR0_CMP_EN(1), 0);
 }
 
 uint8_t getCompOutputLevel()
@@ -174,11 +173,13 @@ void changeMainComp(LPCMP_Type *CMPx)
 /*
  * @brief 	Changes which phase will be compared to BEMF_COMMON
  * 			Also changes the comparator unit being used if necessary
+ * 			And sets to get an interrupt on the rising or falling edge of the comparator output
  */
 void changeCompInput()
 {
-//	//Toggle P3.15 output
-//	GPIO3->PTOR = (1 << 15);
+	//Disable the comparator unit.
+	//Necessary to prevent any noise on the comparator output when changing the control register fields.
+	disableComparators();
 
 	//Check commutation step
 	if (step == 1 || step == 4)
@@ -199,6 +200,17 @@ void changeCompInput()
 		modifyReg32(&PHASE_B_COMP_UNIT->CCR2, LPCMP_CCR2_MSEL_MASK, LPCMP_CCR2_MSEL(PHASE_B_COMP_INP));
 		changeMainComp(PHASE_B_COMP_UNIT);
 	}
+
+	modifyReg32(&CMP0->IER,
+			LPCMP_IER_CFF_IE_MASK | LPCMP_IER_CFR_IE_MASK,
+			0);
+	modifyReg32(&CMP1->IER,
+			LPCMP_IER_CFF_IE_MASK | LPCMP_IER_CFR_IE_MASK,
+			0);
+
+	//Enable main comparator unit after control register fields have been adjusted
+	enableComparator();
+//	delayMicros(40);
 
 	//Check if BEMF is rising or falling
 	if (rising)

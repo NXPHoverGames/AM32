@@ -257,9 +257,10 @@ void zcfoundroutine(void);
 //#define FIXED_DUTY_MODE_POWER 100     //
 // 0-100 percent not used in fixed speed mode
 
-// #define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
+//TODO use this to bypass Dshot for testing
+#define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
 // using the speed control loop PID 
-//#define FIXED_SPEED_MODE_RPM  1000  //
+#define FIXED_SPEED_MODE_RPM  2000  //
 // intended final rpm , ensure pole pair numbers are entered correctly in config
 // tool.
 
@@ -687,10 +688,10 @@ void loadEEpromSettings()
 #ifdef NXP
     	for (int submodule = 0; submodule <= 2; submodule++) {
     		//TODO fix this
-//    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(dead_time_override);	//PWMA deadtime
-//    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(dead_time_override);	//PWMB deadtime
-    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(DEAD_TIME);	//PWMA deadtime
-    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(DEAD_TIME);	//PWMB deadtime
+    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(dead_time_override);	//PWMA deadtime
+    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(dead_time_override);	//PWMB deadtime
+//    		FLEXPWM0->SM[submodule].DTCNT0 = PWM_DTCNT0_DTCNT0(DEAD_TIME);	//PWMA deadtime
+//    		FLEXPWM0->SM[submodule].DTCNT1 = PWM_DTCNT1_DTCNT1(DEAD_TIME);	//PWMB deadtime
     	}
 #endif
         }
@@ -779,22 +780,8 @@ void getBemfState()
     if (step == 3 || step == 6) { // phase B pf0
         current_state = PHASE_B_EXTI_PORT->IDR & PHASE_B_EXTI_PIN;
     }
-#elif defined(NXP)
-    if (step == 1 || step == 4) {
-    	//Phase C
-    	current_state = GPIO2->PDR[3];
-    }
-    if (step == 2 || step == 5) {
-    	//Phase A
-    	current_state = GPIO1->PDR[4];
-    }
-    if (step == 3 || step == 6) {
-    	//Phase B
-    	current_state = GPIO1->PDR[5];
-    }
 #else
-    //TODO fix this getCompOutputLevel.
-    //The comparator is not working so it always output 1 or 0 here depending on which comp unit it uses.
+    //TODO hopefully this works as I tested it in the example
     current_state = !getCompOutputLevel(); // polarity reversed
 #endif
     if (rising) {
@@ -874,6 +861,8 @@ void PeriodElapsedCallback()
     }
     waitTime = (commutation_interval >> 1) - advance;
     if (!old_routine) {
+    	//TODO remove this
+    	GPIO3->PTOR = (1 << 15);
         enableCompInterrupts(); // enable comp interrupt
     }
     if (zero_crosses < 10000) {
@@ -910,8 +899,10 @@ void interruptRoutine()
             }
         }
     __disable_irq();
-		maskPhaseInterrupts();
-		thiszctime = INTERVAL_TIMER_COUNT;  
+	//TODO remove this
+	GPIO3->PTOR = (1 << 14);
+	maskPhaseInterrupts();
+	thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
     SET_AND_ENABLE_COM_INT(waitTime+1); // enable COM_TIMER interrupt
     __enable_irq();
@@ -1317,6 +1308,8 @@ void tenKhzRoutine()
             maskPhaseInterrupts();
             getBemfState();
             if (!zcfound) {
+            	//TODO remove this
+            	GPIO2->PTOR = (1 << 13);
                 if (rising) {
                     if (bemfcounter > min_bemf_counts_up) {
                         zcfound = 1;
@@ -1673,7 +1666,7 @@ int main(void)
     eepromBuffer.advance_level = 2;
     eepromBuffer.pwm_frequency = 24;
     eepromBuffer.startup_power = 100;
-    eepromBuffer.motor_kv = 100;//55;
+    eepromBuffer.motor_kv = 55;
     eepromBuffer.motor_poles = 12;//14;
     eepromBuffer.beep_volume = 5;
     eepromBuffer.servo.low_threshold = 128;
@@ -1687,6 +1680,7 @@ int main(void)
     eepromBuffer.limits.temperature = 141;
     eepromBuffer.limits.current = 102;
     eepromBuffer.sine_mode_power = 6;
+
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || eeprom_layout_version > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;
         eepromBuffer.version.minor = VERSION_MINOR;
@@ -2011,8 +2005,8 @@ if(zero_crosses < 5){
             ADC_DMA_Callback();
 
             //Convert temperature data to actual temperature in degrees Celsius
-            converted_degrees = computeTemperature(ADC_raw_temp[0], ADC_raw_temp[1]);
-//            converted_degrees = 0;
+//            converted_degrees = computeTemperature(ADC_raw_temp[0], ADC_raw_temp[1]);
+            converted_degrees = 0;
 
             //Start ADC conversion
             startADCConversion();
@@ -2071,8 +2065,8 @@ if(zero_crosses < 5){
                                                // high_rpm_level, set to a
                                                // consvervative number in source.
             }else{
-							duty_cycle_maximum = 2000;
-						}
+				duty_cycle_maximum = 2000;
+			}
 
             if (degrees_celsius > eepromBuffer.limits.temperature) {
                 duty_cycle_maximum = map(degrees_celsius, eepromBuffer.limits.temperature - 10, eepromBuffer.limits.temperature + 10,

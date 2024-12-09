@@ -3460,11 +3460,9 @@
 #define PHASE_B_COMP_UNIT 	CMP1
 #define PHASE_C_COMP_INP  	1  		//P1.3 COMP0_IN1
 #define PHASE_C_COMP_UNIT 	CMP0
-//#define PHASE_COMP_PORT 	PORT1
 
 #define COMMON_COMP0_INP	0		//P2.2 COMP0_IN0
 #define COMMON_COMP1_INP	0		//P2.3 COMP1_IN0
-//#define COMMON_COMP_PORT	PORT2
 
 //TODO set correct ADC pins and channels
 #define CURRENT_SENSE_ADC_PIN     	2//12		//P2.12

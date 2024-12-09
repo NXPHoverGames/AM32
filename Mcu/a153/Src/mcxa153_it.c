@@ -33,9 +33,6 @@ void CMP0_IRQHandler(void)
 {
 	uint32_t flags = CMP0->CSR & 0x7;
 
-	//Clear comparator flags
-	CMP0->CSR = flags;
-
 	//Rising interrupt
 	if (flags & LPCMP_CSR_CFR_MASK) {
 		//Call function from main.c
@@ -46,6 +43,9 @@ void CMP0_IRQHandler(void)
 		//Call function from main.c
 		interruptRoutine();
 	}
+
+	//Clear comparator flags
+	CMP0->CSR = flags;
 }
 
 /*
@@ -55,9 +55,6 @@ void CMP1_IRQHandler(void)
 {
 	uint32_t flags = CMP1->CSR & 0x7;
 
-	//Clear comparator flags
-	CMP1->CSR = flags;
-
 	//Rising interrupt
 	if (flags & LPCMP_CSR_CFR_MASK) {
 		//Call function from main.c
@@ -68,6 +65,9 @@ void CMP1_IRQHandler(void)
 		//Call function from main.c
 		interruptRoutine();
 	}
+
+	//Clear comparator flags
+	CMP1->CSR = flags;
 }
 
 /*
@@ -77,17 +77,13 @@ void CTIMER1_IRQHandler(void)
 {
 	uint32_t flags = CTIMER1->IR;
 
-	//Clear interrupt flags
-	CTIMER1->IR = flags;
-
 	if(flags & CTIMER_IR_MR0INT_MASK) {
-		//Toggle P3.15 output
-//		GPIO3->PTOR = (1 << 15);
-//		__DSB();
-
 		//Call function from main.c
 		PeriodElapsedCallback();
 	}
+
+	//Clear interrupt flags
+	CTIMER1->IR = flags;
 }
 
 /*
@@ -98,8 +94,8 @@ void LPTMR0_IRQHandler(void)
 	//Clear timer compare flag
 	modifyReg32(&LPTMR0->CSR, LPTMR_CSR_TCF_MASK, LPTMR_CSR_TCF(1));
 
-//	//Toggle P3.15 output
-//	GPIO3->PTOR = (1 << 15);
+	//Toggle P2.6 output
+//	GPIO2->PTOR = (1 << 6);
 
 	//Call loop function from main.c
 	tenKhzRoutine();
