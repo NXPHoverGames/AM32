@@ -39,17 +39,17 @@ void initDMA_DshotPWM(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Sets the amount of major loop counts to handle before DMA transfer complete
-	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_CITER_ELINKNO, DMA_TCD_CITER_ELINKNO_CITER_MASK,
-			DMA_TCD_CITER_ELINKNO_CITER(buffersize / 2));
+	DMA0->CH[DMA_CH_DshotPWM].TCD_CITER_ELINKNO = DMA_TCD_CITER_ELINKNO_CITER(buffersize / 2);
 
 	//Sets the amount of major loop counts after a DMA transfer completes
 	//i.e. the CITER register gets this BITER value after DMA transfer complete
-	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_BITER_ELINKNO, DMA_TCD_BITER_ELINKNO_BITER_MASK,
-			DMA_TCD_BITER_ELINKNO_BITER(buffersize / 2));
+	DMA0->CH[DMA_CH_DshotPWM].TCD_BITER_ELINKNO = DMA_TCD_BITER_ELINKNO_BITER(buffersize / 2);
 
 	//Set number of bytes to 8
 	//We are reading CR[1] and CR[2]
-	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].TCD_NBYTES_MLOFFNO, DMA_TCD_NBYTES_MLOFFNO_NBYTES_MASK, DMA_TCD_NBYTES_MLOFFNO_NBYTES(8));
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].TCD_NBYTES_MLOFFNO,
+			DMA_TCD_NBYTES_MLOFFNO_NBYTES_MASK,
+			DMA_TCD_NBYTES_MLOFFNO_NBYTES(8));
 
 	//Set source address to CR[1] to make the DMA circulate between CR[1] and CR[2] properly
 	DMA0->CH[DMA_CH_DshotPWM].TCD_SADDR = (uint32_t)&CTIMER0->CR[1];
@@ -213,7 +213,7 @@ void initDMA_UART(void)
 	DMA0->CH[DMA_CH_UART].CH_MUX = kDma0RequestLPUART1Tx;
 
 	//Set that after major count completion the hardware request bit is cleared automatically
-	modifyReg32(&DMA0->CH[DMA_CH_UART].CH_CSR, DMA_TCD_CSR_DREQ_MASK, DMA_TCD_CSR_DREQ(1));
+	modifyReg16(&DMA0->CH[DMA_CH_UART].TCD_CSR, DMA_TCD_CSR_DREQ_MASK, DMA_TCD_CSR_DREQ(1));
 
 	//Enable DMA0 CH2 interrupt
 	__NVIC_SetPriority(DMA_CH_UART_IRQ, 2);	//Set UART interrupt priority to 2
@@ -238,6 +238,14 @@ void enableDMA_DshotPWM(void)
 	//Set the major loop count and addresses again to prevent unintended DMA request from CTIMER match register
 	//Set current and beginning major loop count to 8
 	DMA0->CH[DMA_CH_DshotPWM].TCD_CITER_ELINKNO = DMA_TCD_CITER_ELINKNO_CITER(buffersize / 2);
+
+	//Sets the amount of major loop counts after a DMA transfer completes
+	//i.e. the CITER register gets this BITER value after DMA transfer complete
+	DMA0->CH[DMA_CH_DshotPWM].TCD_BITER_ELINKNO = DMA_TCD_BITER_ELINKNO_BITER(buffersize / 2);
+
+	//Set last destination address adjustment to -8 bytes * the number of DMA requests before transfer complete
+	//Adds this value to the destination address when CITER reaches 0 / DMA transfer is complete
+	DMA0->CH[DMA_CH_DshotPWM].TCD_DLAST_SGA = -(8 * (buffersize / 2));
 
 	//Set source address
 	DMA0->CH[DMA_CH_DshotPWM].TCD_SADDR = (uint32_t)&CTIMER0->CR[1];
@@ -268,13 +276,16 @@ void enableDMA_UART(void)
  */
 void doDshotCorrection(void)
 {
-	//TODO check for roll-over?
-	int sum = dma_buffer[1];
-	for (int i = 1; i < buffersize; i++) {
-		sum += dma_buffer[(i << 1) + 1];
+	//If larger than 3 it must be Dshot. PWM input does not need correction
+	if (buffersize > 3) {
+		//TODO check for roll-over?
+		int sum = dma_buffer[1];
+		for (int i = 1; i < buffersize; i++) {
+			sum += dma_buffer[(i << 1) + 1];
 
-		dma_buffer[(i << 1)] += sum;
-		dma_buffer[(i << 1) + 1] += sum;
+			dma_buffer[(i << 1)] += sum;
+			dma_buffer[(i << 1) + 1] += sum;
+		}
 	}
 }
 

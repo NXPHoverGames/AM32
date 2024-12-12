@@ -31,6 +31,9 @@ char input_ready = 0;
  */
 void CMP0_IRQHandler(void)
 {
+//    //TODO remove this
+//    GPIO1->PTOR = (1 << 13);
+
 	//Call function from main.c
 	interruptRoutine();
 
@@ -43,6 +46,9 @@ void CMP0_IRQHandler(void)
  */
 void CMP1_IRQHandler(void)
 {
+    //TODO remove this
+//    GPIO1->PTOR = (1 << 13);
+
 	//Call function from main.c
 	interruptRoutine();
 
@@ -83,30 +89,36 @@ void LPTMR0_IRQHandler(void)
  */
 void DMA_CH0_IRQHandler(void)
 {
-	//If there is an interrupt because DMA transfer is complete
-//	if ((DMA0->CH[DMA_CH_DshotPWM].CH_INT & DMA_CH_INT_INT_MASK) | (DMA0->CH[0].CH_CSR & DMA_CH_CSR_DONE_MASK)) {
-		//Clear DMA channel 0 interrupt flag
-		DMA0->CH[DMA_CH_DshotPWM].CH_INT = DMA_CH_INT_INT(1);
+	if (armed && dshot_telemetry) {
+	    if (out_put) {
+	        receiveDshotDma();
+	        compute_dshot_flag = 2;
+	    } else {
+	        sendDshotDma();
+	        compute_dshot_flag = 1;
+	    }
+		//Set input_ready so processDshot is called in main loop
+		input_ready = 1;
+	    return;
+	}
+
+	//Convert to correct Dshot/PWM timing data format
+	doDshotCorrection();
+
+	//Call transfercomplete
+	transfercomplete();
+
+	//Set input_ready so processDshot is called in main loop
+	input_ready = 1;
+
+	//Clear DMA channel 0 interrupt flag
+	DMA0->CH[DMA_CH_DshotPWM].CH_INT = DMA_CH_INT_INT(1);
+
+	//Clear done flag
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, 0, DMA_CH_CSR_DONE(1));
 
 	//Clear DMA error flag
 	DMA0->CH[DMA_CH_DshotPWM].CH_ES = DMA_CH_ES_ERR(1);
-
-		//Clear done flag
-		modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_DONE_MASK, DMA_CH_CSR_DONE(1));
-
-		//Convert to correct Dshot/PWM timing data format
-		doDshotCorrection();
-
-		//TODO Add transfercomplete
-		//And then make input_ready 1 so it will call processDshot in the main()
-//		transfercomplete();
-
-		input_ready = 1;
-
-
-		//Process Dshot
-//		processDshot();
-//	}
 }
 
 /*

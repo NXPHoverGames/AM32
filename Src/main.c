@@ -258,9 +258,9 @@ void zcfoundroutine(void);
 // 0-100 percent not used in fixed speed mode
 
 //TODO use this to bypass Dshot for testing
-#define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
+//#define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
 // using the speed control loop PID 
-#define FIXED_SPEED_MODE_RPM  5000  //
+//#define FIXED_SPEED_MODE_RPM  2000  //
 // intended final rpm , ensure pole pair numbers are entered correctly in config
 // tool.
 
@@ -1657,8 +1657,8 @@ int main(void)
     eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
     eepromBuffer.advance_level = 2;
     eepromBuffer.pwm_frequency = 24;
-    eepromBuffer.startup_power = 10;
-    eepromBuffer.motor_kv = 10;
+    eepromBuffer.startup_power = 100;
+    eepromBuffer.motor_kv = 55;
     eepromBuffer.motor_poles = 14;//14;
     eepromBuffer.beep_volume = 5;
     eepromBuffer.servo.low_threshold = 128;

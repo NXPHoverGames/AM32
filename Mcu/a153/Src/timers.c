@@ -9,33 +9,33 @@
 #include "functions.h"
 
 /*
- * @brief Initializes the Watchdog which resets the chip after a timeout of 2 seconds
+ * @brief 	Initializes the Watchdog which resets the chip after a timeout of 2 seconds
+ * 			By default the Watchdog timer runs on a 1MHz clock
  */
 void MX_IWDG_Init(void)
 {
 	//Unlock clock configuration registers access
-	SYSCON->CLKUNLOCK &= ~SYSCON_CLKUNLOCK_UNLOCK(0x1);
+	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
 
 	//Enable peripheral clock
-	MRCC0->MRCC_GLB_CC0_SET |= MRCC_MRCC_GLB_CC0_WWDT0(1);
+	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_WWDT0(1);
 
-	//Set Watchdog clock divider, watchdog timer runs on 1MHz clock (CLK_1M)
-	MRCC0->MRCC_WWDT0_CLKDIV |= MRCC_MRCC_WWDT0_CLKDIV_DIV(0);
-
-	//Enable Watchdog timer
-	MRCC0->MRCC_WWDT0_CLKDIV &= ~MRCC_MRCC_WWDT0_CLKDIV_HALT(1);
+	//Enable Watchdog timer and set Watchdog clock divider
+	modifyReg32(&MRCC0->MRCC_WWDT0_CLKDIV,
+			MRCC_MRCC_WWDT0_CLKDIV_HALT_MASK | MRCC_MRCC_WWDT0_CLKDIV_DIV_MASK,
+			MRCC_MRCC_WWDT0_CLKDIV_DIV(0));
 
 	//Freeze clock configuration registers access
-	SYSCON->CLKUNLOCK |= SYSCON_CLKUNLOCK_UNLOCK(0x1);
+	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set the watchdog timeout to 2s
 	WWDT0->TC = WWDT_TC_COUNT(2000000 >> 2);	//divide by 4 cause of fixed clock divider of 4 inside WWDT
 
 	//Set watchdog timeout to cause a reset
-	WWDT0->MOD |= WWDT_MOD_WDRESET(1);
+	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDRESET_MASK, WWDT_MOD_WDRESET(1));
 
 	//Enable watchdog timer
-	WWDT0->MOD |= WWDT_MOD_WDEN(1);
+	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDEN_MASK, WWDT_MOD_WDEN(1));
 
 	//Write the correct feed sequence to enable the watchdog timer
 	WWDT0->FEED = WWDT_FEED_FEED(0xaa);
@@ -53,36 +53,34 @@ void MX_IWDG_Init(void)
 void initDshotPWMTimer(void)
 {
 	//Unlock clock configuration registers access
-	SYSCON->CLKUNLOCK &= ~SYSCON_CLKUNLOCK_UNLOCK(0x1);
+	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
 
-	//Select FRO_12M as clock for CTIMER0
-	MRCC0->MRCC_CTIMER0_CLKSEL &= ~MRCC_MRCC_CTIMER0_CLKSEL_MUX_MASK;
+	//Select FRO_HF as clock for CTIMER0, which is 192MHz, see SystemClock_Config()
+	modifyReg32(&MRCC0->MRCC_CTIMER0_CLKSEL, MRCC_MRCC_CTIMER0_CLKSEL_MUX_MASK, MRCC_MRCC_CTIMER0_CLKSEL_MUX(1));
 
-	//Enable CTIMER0 and set divider to 1
-	MRCC0->MRCC_CTIMER0_CLKDIV &= ~MRCC_MRCC_CTIMER0_CLKDIV_HALT(1);
+	//Enable CTIMER0 and set divider to 2, so clock frequency is 96MHz
+	modifyReg32(&MRCC0->MRCC_CTIMER0_CLKDIV,
+			MRCC_MRCC_CTIMER0_CLKDIV_HALT_MASK | MRCC_MRCC_CTIMER0_CLKDIV_DIV_MASK,
+			MRCC_MRCC_CTIMER0_CLKDIV_DIV(1));
 
-	//Enable peripheral clocks
-	MRCC0->MRCC_GLB_CC0_SET |= MRCC_MRCC_GLB_RST0_CTIMER0(1);
-	MRCC0->MRCC_GLB_CC0_SET |= MRCC_MRCC_GLB_RST0_INPUTMUX0(1);
-	MRCC0->MRCC_GLB_CC0_SET |= MRCC_MRCC_GLB_RST0_PORT1(1);
+	//Enable CTIMER0 peripheral clock
+	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_RST0_CTIMER0(1);
 
-	//Release peripherals from reset
-	MRCC0->MRCC_GLB_RST0_SET |= MRCC_MRCC_GLB_RST0_CTIMER0(1);
-	MRCC0->MRCC_GLB_RST0_SET |= MRCC_MRCC_GLB_RST0_INPUTMUX0(1);
-	MRCC0->MRCC_GLB_RST0_SET |= MRCC_MRCC_GLB_RST0_PORT1(1);
+	//Release CTIMER0 from reset
+	MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_RST0_CTIMER0(1);
 
 	//Freeze clock configuration registers access
-	SYSCON->CLKUNLOCK |= SYSCON_CLKUNLOCK_UNLOCK(1);
+	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
-	//Set pin 1.2 to CT_INP0 so it can be used as the Dshot/PWM input
-	//Enable input buffer and pull-down resistor
-	modifyReg32(&PORT1->PCR[2],
+	//Set PWM/Dshot input pin to timer capture/compare input
+	//And enable input buffer and pull-down resistor
+	modifyReg32(&INPUT_PIN_PORT->PCR[INPUT_PIN],
 			PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(5) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
 
-	//Set CT_INP4 as TIMER0 capture input for capture register 1 and 2
-	INPUTMUX0->CTIMER0CAP[1] = 1;	//CT_INP0
-	INPUTMUX0->CTIMER0CAP[2] = 1;	//CT_INP0
+	//Set PWM/Dshot input pin as TIMER0 capture input for capture register 1 and 2
+	INPUTMUX0->CTIMER0CAP[1] = INPUT_PIN_CAPTURE_INP;
+	INPUTMUX0->CTIMER0CAP[2] = INPUT_PIN_CAPTURE_INP;
 
 	//Set prescaler value
 	CTIMER0->PR = 0;
@@ -90,13 +88,15 @@ void initDshotPWMTimer(void)
 	//Set match0 value to zero
 	CTIMER0->MR[0] = 0;
 
-	//Configure capture control register
-	CTIMER0->CCR |= CTIMER_CCR_CAP1RE(1);	//Loads CR1 on rising edge
-	CTIMER0->CCR |= CTIMER_CCR_CAP2FE(1);	//Loads CR2 on falling edge
+	//Configure capture control register so capture value register is loaded on CR1 rising edge and CR2 falling edge
+	modifyReg32(&CTIMER0->CCR,
+			CTIMER_CCR_CAP1RE_MASK | CTIMER_CCR_CAP2FE_MASK,
+			CTIMER_CCR_CAP1RE(1) | CTIMER_CCR_CAP2FE(1));
 
 	//Clear timer counter on capture channel 1 falling edge
-	CTIMER0->CTCR |= CTIMER_CTCR_ENCC(1);
-	CTIMER0->CTCR |= CTIMER_CTCR_SELCC(5);
+	modifyReg32(&CTIMER0->CTCR,
+			CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
+			CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(5));
 }
 
 /*
@@ -198,7 +198,7 @@ void initSystickTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set Systick clock to clock selected in MRCC_SYSTICK_CLKSEL
-	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, 0);
+	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, (1 << SysTick_CTRL_CLKSOURCE_Pos));
 
 	//Set Systick reload value to max
 	SysTick->LOAD = 0xffffff;
@@ -295,7 +295,7 @@ void enableTenKHzTimer(void)
 inline void resetInputCaptureTimer(void)
 {
 	//Reset timer counter
-	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CRST_MASK, CTIMER_TCR_CRST(1));
+	modifyReg32(&CTIMER0->TCR, 0, CTIMER_TCR_CRST(1));
 	delayMicros(2);
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CRST_MASK, 0);
 }

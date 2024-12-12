@@ -135,27 +135,41 @@ void SystemClock_Config(void)
  */
 void initGPIO(void)
 {
-	//Enable peripheral clocks
+	//Unlock clock configuration registers access
+	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
+
+	//Enable PORT peripheral clocks
 	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_PORT0(1);
 	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_PORT1(1);
 	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_PORT2(1);
 	MRCC0->MRCC_GLB_CC1_SET = MRCC_MRCC_GLB_CC1_PORT3(1);
 
+	//Enable GPIO peripheral clocks
 	MRCC0->MRCC_GLB_CC1_SET = MRCC_MRCC_GLB_CC1_GPIO0(1);
 	MRCC0->MRCC_GLB_CC1_SET = MRCC_MRCC_GLB_CC1_GPIO1(1);
 	MRCC0->MRCC_GLB_CC1_SET = MRCC_MRCC_GLB_CC1_GPIO2(1);
 	MRCC0->MRCC_GLB_CC1_SET = MRCC_MRCC_GLB_CC1_GPIO3(1);
 
-	//Release peripherals from reset
+	//Enable INPUTMUX peripheral clock
+	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_RST0_INPUTMUX0(1);
+
+	//Release PORT peripherals from reset
 	MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_RST0_PORT0(1);
 	MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_RST0_PORT1(1);
 	MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_RST0_PORT2(1);
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_PORT3(1);
 
+	//Release GPIO peripherals from reset
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO0(1);
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO1(1);
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO2(1);
 	MRCC0->MRCC_GLB_RST1_SET = MRCC_MRCC_GLB_RST1_GPIO3(1);
+
+	//Release INPUTMUX peripheral from reset
+	MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_RST0_INPUTMUX0(1);
+
+	//Freeze clock configuration registers access
+	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Enable GPIO pins for testing/debugging. P3.30, P3.31, P2.0, P1.13. Set them to output
 	modifyReg32(&PORT3->PCR[30],
@@ -163,12 +177,6 @@ void initGPIO(void)
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
 	modifyReg32(&GPIO3->PDDR, 0, (1 << 30));
 	GPIO3->PCOR = (1 << 30);
-
-	modifyReg32(&PORT3->PCR[31],
-			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO3->PDDR, 0, (1 << 31));
-	GPIO3->PCOR = (1 << 31);
 
 	modifyReg32(&PORT2->PCR[0],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
@@ -181,90 +189,12 @@ void initGPIO(void)
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
 	modifyReg32(&GPIO1->PDDR, 0, (1 << 13));
 	GPIO1->PCOR = (1 << 13);
-}
 
-/*
- * @brief 	This is the timer used for the Dshot/PWM
- */
-void UN_TIM_Init(void)
-{
-//    // LL_TIM_InitTypeDef TIM_InitStruct = {0};
-//
-//    LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-//
-//    /* Peripheral clock enable */
-//#ifdef USE_TIMER_15_CHANNEL_1
-//  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM15);
-//  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
-//    /**TIM16 GPIO Configuration
-//    PA6   ------> TIM16_CH1
-//    */
-//    GPIO_InitStruct.Pin = LL_GPIO_PIN_2;
-//    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-//    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-//    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-//    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-//    GPIO_InitStruct.Alternate = LL_GPIO_AF_14;
-//    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//#endif
-//
-//#ifdef USE_TIMER_3_CHANNEL_1
-//
-//    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
-//    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-//    /**TIM16 GPIO Configuration
-//    PA6   ------> TIM16_CH1
-//    */
-//    GPIO_InitStruct.Pin = INPUT_PIN;
-//    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-//    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-//    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-//    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-//    GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-//    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-//#endif
-//
-//  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_5, LL_DMA_REQUEST_7);
-//
-//  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_5, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-//
-//  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_5, LL_DMA_PRIORITY_HIGH);
-//
-//  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_5, LL_DMA_MODE_NORMAL);
-//
-//  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_5, LL_DMA_PERIPH_NOINCREMENT);
-//
-//  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_5, LL_DMA_MEMORY_INCREMENT);
-//
-//  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_5, LL_DMA_PDATAALIGN_HALFWORD);
-//
-//  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_5, LL_DMA_MDATAALIGN_WORD);
-//
-//#ifdef USE_TIMER_15_CHANNEL_1
-//    NVIC_SetPriority(IC_DMA_IRQ_NAME, 1);
-//    NVIC_EnableIRQ(IC_DMA_IRQ_NAME);
-//#endif
-//#ifdef USE_TIMER_3_CHANNEL_1
-//    NVIC_SetPriority(IC_DMA_IRQ_NAME, 1);
-//    NVIC_EnableIRQ(IC_DMA_IRQ_NAME);
-//#endif
-//
-//    // TIM_InitStruct.Prescaler = 0;
-//    // TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-//    // TIM_InitStruct.Autoreload = 63;
-//    // TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-//    // TIM_InitStruct.RepetitionCounter = 0;
-//    //  LL_TIM_Init(IC_TIMER_REGISTER, &TIM_InitStruct);
-//    IC_TIMER_REGISTER->PSC = 0;
-//    IC_TIMER_REGISTER->ARR = 63;
-//
-//    // LL_TIM_DisableARRPreload(IC_TIMER_REGISTER);
-//    // LL_TIM_IC_SetActiveInput(IC_TIMER_REGISTER, IC_TIMER_CHANNEL,
-//    // LL_TIM_ACTIVEINPUT_DIRECTTI); LL_TIM_IC_SetPrescaler(IC_TIMER_REGISTER,
-//    // IC_TIMER_CHANNEL, LL_TIM_ICPSC_DIV1);
-//    // LL_TIM_IC_SetFilter(IC_TIMER_REGISTER, IC_TIMER_CHANNEL,
-//    // LL_TIM_IC_FILTER_FDIV1); LL_TIM_IC_SetPolarity(IC_TIMER_REGISTER,
-//    // IC_TIMER_CHANNEL, LL_TIM_IC_POLARITY_BOTHEDGE);
+	modifyReg32(&PORT1->PCR[12],
+			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+	modifyReg32(&GPIO1->PDDR, 0, (1 << 12));
+	GPIO1->PCOR = (1 << 12);
 }
 
 void enableCorePeripherals()
@@ -277,9 +207,10 @@ void enableCorePeripherals()
 
 	//Enable the timers
 #ifndef USE_ADC_INPUT
-//	enableDshotPWMTimer();
-//	enableDMA_DshotPWM();
+	enableDshotPWMTimer();
+	enableDMA_DshotPWM();
 #endif
+
 #ifndef BRUSHED_MODE
 	enableComTimer();
 #endif
@@ -291,9 +222,6 @@ void enableCorePeripherals()
 	enableADC();
 	enableDMA_ADC();
 #endif
-
-	//Enable comparators
-//	enableComparator();
 
 	//Enable UART DMA
 #ifdef USE_SERIAL_TELEMETRY

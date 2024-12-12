@@ -3420,9 +3420,11 @@
 #define    MCU_A153
 
 //This is the Dshot/PWM input pin
-#define    INPUT_PIN            	2
-#define    INPUT_PIN_PORT        	PORT1
-#define    INPUT_PIN_GPIO			GPIO1
+#define    INPUT_PIN            	5		//P2.5
+#define    INPUT_PIN_PORT        	PORT2
+#define    INPUT_PIN_GPIO			GPIO2
+#define    INPUT_PIN_CAPTURE_INP	16		//CT_INP15, check datasheet for correct value
+#define    INPUT_PIN_ALT_FUNC		4		//CTIMER Capture input
 
 //This is the Dshot/PWM timer
 #define    IC_TIMER_CHANNEL    		LL_TIM_CHANNEL_CH1 //TODO is this needed for us?
@@ -3687,7 +3689,7 @@
 #ifdef MCU_A153
 //#define STMICRO
 #define NXP
-#define CPU_FREQUENCY_MHZ   192
+#define CPU_FREQUENCY_MHZ   96		//Is the CPU/System/Ctimer0 clock
 #ifndef EEPROM_START_ADD
 #define EEPROM_START_ADD  (uint32_t)0x0800F800
 #endif
