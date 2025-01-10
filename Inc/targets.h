@@ -1844,9 +1844,9 @@
 #define FIRMWARE_NAME           "FRDM_MCXA153"
 #define DEAD_TIME               70
 #define HARDWARE_GROUP_NXP_MCXA153
-#define TARGET_VOLTAGE_DIVIDER  210
-#define CURRENT_OFFSET          498
-#define MILLIVOLT_PER_AMP        16
+#define TARGET_VOLTAGE_DIVIDER  457
+#define CURRENT_OFFSET          1650 //0	//millivolts
+#define MILLIVOLT_PER_AMP       200 //20
 #define USE_SERIAL_TELEMETRY
 #define USE_INTERNAL_AMP
 #define RESET 					0 //TODO find out what to do with this
@@ -3466,9 +3466,19 @@
 #define COMMON_COMP0_INP	3		//P1.0 COMP0_IN3
 #define COMMON_COMP1_INP	3		//P1.1 COMP1_IN3
 
+//TODO set correct UART pins and module
+#define SERIAL_TELEMETRY				LPUART2
+#define SERIAL_TELEMETRY_MODULE 		2
+#define SERIAL_TELEMETRY_TX_PORT 		PORT1
+#define SERIAL_TELEMETRY_TX_PIN 		13
+#define SERIAL_TELEMETRY_TX_ALT_FUNC 	3
+//#define SERIAL_TELEMETRY_RX_PORT 		PORT2
+//#define SERIAL_TELEMETRY_RX_PIN 		9
+//#define SERIAL_TELEMETRY_RX_ALT_FUNC 	3
+
 //TODO set correct ADC pins and channels
-#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.2
-#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.1
+#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.2 (FRDM-LVBLDC)
+#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.1 (FRDM-LVBLDC)
 #define SENSE_ADC_PORT 				PORT2
 
 #define CURRENT_ADC_CHANNEL         4//5

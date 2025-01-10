@@ -31,9 +31,6 @@ char input_ready = 0;
  */
 void CMP0_IRQHandler(void)
 {
-//    //TODO remove this
-//    GPIO1->PTOR = (1 << 13);
-
 	//Call function from main.c
 	interruptRoutine();
 
@@ -46,9 +43,6 @@ void CMP0_IRQHandler(void)
  */
 void CMP1_IRQHandler(void)
 {
-    //TODO remove this
-//    GPIO1->PTOR = (1 << 13);
-
 	//Call function from main.c
 	interruptRoutine();
 
@@ -144,9 +138,6 @@ void DMA_CH1_IRQHandler(void)
  */
 void DMA_CH2_IRQHandler(void)
 {
-	//Disable transmitter
-	modifyReg32(&LPUART1->CTRL, LPUART_CTRL_TE_MASK, 0);
-
 	//Clear DMA channel 2 interrupt flag
 	DMA0->CH[DMA_CH_UART].CH_INT = DMA_CH_INT_INT(1);
 

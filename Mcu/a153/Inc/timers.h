@@ -20,9 +20,10 @@
 
 /*
  * @brief 	Resets timer counter, sets reload value, clears interrupt and enables the interrupt request
+ * TODO I changed MSR to MR
  */
 #define SET_AND_ENABLE_COM_INT(time) { \
-	CTIMER1->MSR[0] = time; \
+	CTIMER1->MR[0] = time; \
 	CTIMER1->TC = 0; \
 	CTIMER1->IR = CTIMER_IR_MR0INT(1); \
 	modifyReg32(&CTIMER1->MCR, CTIMER_MCR_MR0I_MASK, CTIMER_MCR_MR0I(1)); \

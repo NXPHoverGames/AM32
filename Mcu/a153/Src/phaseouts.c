@@ -90,6 +90,19 @@ void phaseBPWM()
  */
 void phaseBFLOAT()
 {
+	//TODO set SM0OUT23 and SM0OUT45 to logic 0
+//	modifyReg16(&FLEXPWM0->SWCOUT,
+//			PWM_SWCOUT_SM1OUT23_MASK | PWM_SWCOUT_SM1OUT45_MASK,
+//			PWM_SWCOUT_SM1OUT23(0) | PWM_SWCOUT_SM1OUT45(0));
+//
+//	//Then set SM0SEL23 and SM0SEL45 to SWCOUT in DTSRCSEL
+//	modifyReg16(&FLEXPWM0->DTSRCSEL,
+//			PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM1SEL45_MASK,
+//			PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM1SEL45(2));
+//
+//	//Set PWM to independent mode
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+
 	//Set low FET pin to GPIO
 	modifyReg32(&PHASE_B_PORT_LOW->PCR[PHASE_B_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
 
@@ -461,6 +474,7 @@ void fullBrake()
     phaseCLOW();
 }
 
+//TODO the following are never called
 void allpwm()
 { // for stepper_sine
     phaseAPWM();

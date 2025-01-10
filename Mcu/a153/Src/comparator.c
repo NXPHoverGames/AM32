@@ -40,6 +40,10 @@ void initComp0(void)
 
 	//Enable high speed comparator mode
 	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
+
+	//TODO fix comparator. could be hardware?
+	//Set comparator hysteresis to 30mV
+//	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_HYSTCTR_MASK, LPCMP_CCR2_HYSTCTR(3));
 }
 
 void initComp1(void)
@@ -75,6 +79,9 @@ void initComp1(void)
 
 	//Enable high speed comparator mode
 	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
+
+	//Set comparator hysteresis to 30mV
+//	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_HYSTCTR_MASK, LPCMP_CCR2_HYSTCTR(3));
 }
 
 /*

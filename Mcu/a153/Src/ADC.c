@@ -7,11 +7,7 @@
 
 #include "ADC.h"
 
-#ifdef USE_ADC_INPUT
-uint16_t ADCDataDMA[5];
-#else
-uint16_t ADCDataDMA[4];
-#endif
+uint16_t ADCDataDMA[ADCDataDMA_size];
 
 extern uint16_t ADC_raw_temp[2];
 extern uint16_t ADC_raw_volts;
@@ -82,7 +78,7 @@ void calibADC(void)
 
 	//Calculate gain offset
 	float gainAdjustment = (float)((131072.0) / (131072.0 - (double)gain_cal)); // Gain_CalA = (131072.0 / (131072-(ADC_GCC_GAIN_CAL(ADC->GCC[0]))
-	modifyReg32(&ADC0->GCR[0], ADC_GCR_GCALR_MASK, ADC_GCR_GCALR(LPADC_GetGainConvResult(gainAdjustment))); 	//write A side GCALR
+	ADC0->GCR[0] = LPADC_GetGainConvResult(gainAdjustment);      				// write A side GCALR
 
 	//Set GCR0[RDY] flag to indicate entered gain_adjustment is valid
 	modifyReg32(&ADC0->GCR[0], ADC_GCR_RDY_MASK, ADC_GCR_RDY(1));
@@ -108,7 +104,9 @@ void initADC(void)
 	modifyReg32(&MRCC0->MRCC_ADC0_CLKSEL, MRCC_MRCC_ADC0_CLKSEL_MUX_MASK, MRCC_MRCC_ADC0_CLKSEL_MUX(0));
 
 	//Enable ADC clock
-	modifyReg32(&MRCC0->MRCC_ADC0_CLKDIV, MRCC_MRCC_ADC0_CLKDIV_HALT_MASK, 0);
+	modifyReg32(&MRCC0->MRCC_ADC0_CLKDIV,
+				MRCC_MRCC_ADC0_CLKDIV_DIV_MASK | MRCC_MRCC_ADC0_CLKDIV_HALT_MASK,
+				MRCC_MRCC_ADC0_CLKDIV_DIV(0));
 
 	//Enable peripheral clocks
 	MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_ADC0(1);
@@ -135,7 +133,7 @@ void initADC(void)
 	//Set ADC CMD1 for measured current
 	modifyReg32(&ADC0->CMD[0].CMDL,
 			ADC_CMDL_MODE_MASK | ADC_CMDL_CTYPE_MASK | ADC_CMDL_ADCH_MASK,
-			ADC_CMDL_MODE(0) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(CURRENT_ADC_CHANNEL));
+			ADC_CMDL_MODE(1) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(CURRENT_ADC_CHANNEL));
 	modifyReg32(&ADC0->CMD[0].CMDH,
 			ADC_CMDH_NEXT_MASK | ADC_CMDH_STS_MASK,
 			ADC_CMDH_NEXT(2) | ADC_CMDH_STS(2));
@@ -143,7 +141,7 @@ void initADC(void)
 	//Set CMD2 for measured voltage
 	modifyReg32(&ADC0->CMD[1].CMDL,
 			ADC_CMDL_MODE_MASK | ADC_CMDL_CTYPE_MASK | ADC_CMDL_ADCH_MASK,
-			ADC_CMDL_MODE(0) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(VOLTAGE_ADC_CHANNEL));
+			ADC_CMDL_MODE(1) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(VOLTAGE_ADC_CHANNEL));
 	modifyReg32(&ADC0->CMD[1].CMDH,
 			ADC_CMDH_NEXT_MASK | ADC_CMDH_STS_MASK,
 			ADC_CMDH_NEXT(3) | ADC_CMDH_STS(2));
@@ -159,11 +157,11 @@ void initADC(void)
 	 */
 	modifyReg32(&ADC0->CMD[2].CMDL,
 			ADC_CMDL_MODE_MASK | ADC_CMDL_CTYPE_MASK | ADC_CMDL_ADCH_MASK,
-			ADC_CMDL_MODE(0) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(TEMP_ADC_CHANNEL));
+			ADC_CMDL_MODE(1) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(TEMP_ADC_CHANNEL));
 #ifndef USE_ADC_INPUT
 	modifyReg32(&ADC0->CMD[2].CMDH,
 			ADC_CMDH_NEXT_MASK | ADC_CMDH_STS_MASK,
-			ADC_CMDH_NEXT(0) | ADC_CMDH_STS(2));
+			ADC_CMDH_NEXT(0) | ADC_CMDH_LOOP(1) | ADC_CMDH_AVGS(8) | ADC_CMDH_STS(6));
 #else
 	modifyReg32(&ADC0->CMD[2].CMDH,
 			ADC_CMDH_NEXT_MASK | ADC_CMDH_STS_MASK,
@@ -172,7 +170,7 @@ void initADC(void)
 	//Set CMD4 for measured optional input
 	modifyReg32(&ADC0->CMD[3].CMDL,
 			ADC_CMDL_MODE_MASK | ADC_CMDL_CTYPE_MASK | ADC_CMDL_ADCH_MASK,
-			ADC_CMDL_MODE(0) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(0));
+			ADC_CMDL_MODE(1) | ADC_CMDL_CTYPE(0) | ADC_CMDL_ADCH(0));
 	modifyReg32(&ADC0->CMD[3].CMDH,
 			ADC_CMDH_NEXT_MASK | ADC_CMDH_STS_MASK,
 			ADC_CMDH_NEXT(0) | ADC_CMDH_STS(2));
@@ -215,19 +213,19 @@ void ADC_DMA_Callback()
 	ADC_raw_input 	= ADCDataDMA[4];
 	ADC_raw_temp[1] = ADCDataDMA[3];
 	ADC_raw_temp[0] = ADCDataDMA[2];
-	ADC_raw_volts  	= ADCDataDMA[1]/2;
+	ADC_raw_volts  	= ADCDataDMA[1];
 	ADC_raw_current = ADCDataDMA[0];
 #else
 	ADC_raw_temp[1] = ADCDataDMA[3];
 	ADC_raw_temp[0]	= ADCDataDMA[2];
-	ADC_raw_volts 	= ADCDataDMA[1] >> 3;
-	ADC_raw_current	= ADCDataDMA[0] >> 3;
+	ADC_raw_volts 	= ADCDataDMA[1];
+	ADC_raw_current	= ADCDataDMA[0];
 #endif
 }
 
 int16_t computeTemperature(uint16_t raw_temp_val1, uint16_t raw_temp_val2)
 {
-	//TODO fix this computation, currently it is not correct
+	//Compute temperature with equation found in datasheet
 	float tmp = (float)slopeFactor * ((bandgapCoefficient * ((float)raw_temp_val2 - (float)raw_temp_val1)) / ((float)raw_temp_val2 + (bandgapCoefficient * ((float)raw_temp_val2 - (float)raw_temp_val1)))) - offsetFactor;
 
 	return (int16_t)tmp;

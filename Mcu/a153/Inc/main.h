@@ -46,6 +46,12 @@ extern "C" {
 
 /* Private defines
  * -----------------------------------------------------------*/
+#ifdef USE_ADC_INPUT
+#define ADCDataDMA_size 5
+#else
+#define ADCDataDMA_size 4
+#endif
+
 //TODO this can be changed to the MCXA NVIC priority settings
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0                                     \

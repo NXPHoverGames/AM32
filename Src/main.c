@@ -848,9 +848,13 @@ void commutate()
  */
 void PeriodElapsedCallback()
 {
+    //TODO remove this
+    GPIO3->PTOR = (1 << 30);
+
     DISABLE_COM_TIMER_INT(); // disable interrupt
     commutate();
     commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
+//    commutation_interval = (3 * commutation_interval + thiszctime) >> 3;	//TODO remove this
   	if (!eepromBuffer.auto_advance) {
 	  advance = (commutation_interval >> 3) * temp_advance; // 60 divde 8 7.5 degree increments
 	} else {
@@ -893,6 +897,8 @@ void interruptRoutine()
                 return;
             }
         }
+            //TODO remove this
+            GPIO2->PTOR = (1 << 0);
     __disable_irq();
 	maskPhaseInterrupts();
 	thiszctime = INTERVAL_TIMER_COUNT;
@@ -1490,9 +1496,10 @@ void advanceincrement()
 
 void zcfoundroutine()
 { // only used in polling mode, blocking routine.
-    thiszctime = INTERVAL_TIMER_COUNT;
+	thiszctime = INTERVAL_TIMER_COUNT;
     SET_INTERVAL_TIMER_COUNT(0);
     commutation_interval = (thiszctime + (3 * commutation_interval)) / 4;
+//    commutation_interval = (thiszctime + (3 * commutation_interval)) / 8;	//TODO remove this
     advance = (commutation_interval >> 3) * 2; //   7.5 degree increments
     waitTime = commutation_interval / 2 - advance;
 //			if(thiszctime < (commutation_interval - (commutation_interval>>2))){
@@ -1518,7 +1525,8 @@ void zcfoundroutine()
 		COM_TIMER->pr = waitTime;
 #endif
 #ifdef NXP
-	COM_TIMER->MSR[0] = waitTime;
+//	COM_TIMER->MSR[0] = waitTime;
+	COM_TIMER->MR[0] = waitTime;
 #endif
 
     commutate();
@@ -1672,6 +1680,8 @@ int main(void)
     eepromBuffer.limits.temperature = 141;
     eepromBuffer.limits.current = 102;
     eepromBuffer.sine_mode_power = 6;
+
+    eepromBuffer.telementry_on_interval = 1;
 
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || eeprom_layout_version > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;
@@ -1970,6 +1980,7 @@ if(zero_crosses < 5){
 #ifdef USE_SERIAL_TELEMETRY
             makeTelemPackage(degrees_celsius, battery_voltage, actual_current,
                 (uint16_t)consumed_current, e_rpm);
+
             send_telem_DMA();
             send_telemetry = 0;
 #endif
@@ -1996,16 +2007,23 @@ if(zero_crosses < 5){
             ADC_DMA_Callback();
 
             //Convert temperature data to actual temperature in degrees Celsius
-//            converted_degrees = computeTemperature(ADC_raw_temp[0], ADC_raw_temp[1]);
-            converted_degrees = 0;
+            converted_degrees = computeTemperature(ADC_raw_temp[0], ADC_raw_temp[1]);
 
             //Start ADC conversion
             startADCConversion();
 #endif
             degrees_celsius = converted_degrees;
+#ifdef NXP
+            //MCXA has 16-bit ADC data
+            battery_voltage = ((7 * battery_voltage) + ((ADC_raw_volts * 3300 / 65535 * VOLTAGE_DIVIDER) / 100)) / 8;
+            smoothed_raw_current = getSmoothedCurrent();
+            //Actual current is in 10mA, so 1 = 10mA
+            actual_current = (((smoothed_raw_current * 3300 / 65535) - CURRENT_OFFSET) * 100) / (MILLIVOLT_PER_AMP);
+#else
             battery_voltage = ((7 * battery_voltage) + ((ADC_raw_volts * 3300 / 4095 * VOLTAGE_DIVIDER) / 100)) >> 3;
             smoothed_raw_current = getSmoothedCurrent();
             actual_current = ((smoothed_raw_current * 3300 / 41) - (CURRENT_OFFSET * 100)) / (MILLIVOLT_PER_AMP);
+#endif
             if (actual_current < 0) {
                 actual_current = 0;
             }

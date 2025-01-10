@@ -135,10 +135,11 @@ void initComTimer(void)
 			CTIMER_MCR_MR0R(1) | CTIMER_MCR_MR0I(1));
 
 	//Set shadow match0 event at 30Hz
-	CTIMER1->MSR[0] = 65535;
+//	CTIMER1->MSR[0] = 65535;
+	CTIMER1->MR[0] = 65535;
 
 	//Reloads match register with shadow register when counter is reset to 0
-	modifyReg32(&CTIMER1->MCR, CTIMER_MCR_MR0RL_MASK, CTIMER_MCR_MR0RL(1));
+//	modifyReg32(&CTIMER1->MCR, CTIMER_MCR_MR0RL_MASK, CTIMER_MCR_MR0RL(1));
 
 	//Enable interrupt
 	__NVIC_SetPriority(CTIMER1_IRQn, 0);	//set interrupt priority to 0

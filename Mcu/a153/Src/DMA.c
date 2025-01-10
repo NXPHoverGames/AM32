@@ -7,13 +7,7 @@
 
 #include "DMA.h"
 
-#ifdef USE_ADC_INPUT
-extern uint16_t ADCDataDMA[5];
-#else
-extern uint16_t ADCDataDMA[4];
-#endif
-
-uint8_t ADCDataDMA_size = sizeof(ADCDataDMA);
+extern uint16_t ADCDataDMA[];
 
 extern uint8_t buffersize;
 extern uint32_t dma_buffer[64];
@@ -131,7 +125,7 @@ void initDMA_ADC(void)
 	//Set destination address
 	DMA0->CH[DMA_CH_ADC].TCD_DADDR = (uint32_t)&ADCDataDMA;
 
-	//Set Destination offset to 0
+	//Set Destination offset to 2 bytes
 	//Increments the destination address by this value after each write transaction
 	DMA0->CH[DMA_CH_ADC].TCD_DOFF = 2;
 
@@ -196,7 +190,7 @@ void initDMA_UART(void)
 	DMA0->CH[DMA_CH_UART].TCD_SLAST_SDA = -nbDataToTransmit;
 
 	//Set destination address
-	DMA0->CH[DMA_CH_UART].TCD_DADDR = (uint32_t)&LPUART1->DATA;
+	DMA0->CH[DMA_CH_UART].TCD_DADDR = (uint32_t)&SERIAL_TELEMETRY->DATA;
 
 	//Set Destination offset to 0 bytes
 	//Increments the destination address by this value after each write transaction
@@ -210,7 +204,7 @@ void initDMA_UART(void)
 	DMA0->CH[DMA_CH_UART].TCD_DLAST_SGA = 0;
 
 	//Set DMA request address to UART1 TX
-	DMA0->CH[DMA_CH_UART].CH_MUX = kDma0RequestLPUART1Tx;
+	DMA0->CH[DMA_CH_UART].CH_MUX = kDma0RequestLPUART0Tx + (2 * SERIAL_TELEMETRY_MODULE);
 
 	//Set that after major count completion the hardware request bit is cleared automatically
 	modifyReg16(&DMA0->CH[DMA_CH_UART].TCD_CSR, DMA_TCD_CSR_DREQ_MASK, DMA_TCD_CSR_DREQ(1));

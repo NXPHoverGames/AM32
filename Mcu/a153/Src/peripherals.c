@@ -184,11 +184,11 @@ void initGPIO(void)
 	modifyReg32(&GPIO2->PDDR, 0, (1 << 0));
 	GPIO2->PCOR = (1 << 0);
 
-	modifyReg32(&PORT1->PCR[13],
-			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-	modifyReg32(&GPIO1->PDDR, 0, (1 << 13));
-	GPIO1->PCOR = (1 << 13);
+//	modifyReg32(&PORT1->PCR[13],
+//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+//			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+//	modifyReg32(&GPIO1->PDDR, 0, (1 << 13));
+//	GPIO1->PCOR = (1 << 13);
 
 	modifyReg32(&PORT1->PCR[12],
 			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
@@ -226,5 +226,6 @@ void enableCorePeripherals()
 	//Enable UART DMA
 #ifdef USE_SERIAL_TELEMETRY
 	enableDMA_UART();
+	enable_telem_UART();
 #endif
 }
