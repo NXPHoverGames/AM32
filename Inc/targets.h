@@ -3420,11 +3420,11 @@
 #define    MCU_A153
 
 //This is the Dshot/PWM input pin
-#define    INPUT_PIN            	5		//P2.5
-#define    INPUT_PIN_PORT        	PORT2
-#define    INPUT_PIN_GPIO			GPIO2
-#define    INPUT_PIN_CAPTURE_INP	16		//CT_INP15, check datasheet for correct value
-#define    INPUT_PIN_ALT_FUNC		4		//CTIMER Capture input
+#define    INPUT_PIN            	2		//P1.2
+#define    INPUT_PIN_PORT        	PORT1
+#define    INPUT_PIN_GPIO			GPIO1
+#define    INPUT_PIN_CAPTURE_INP	1		//CT_INP0, check datasheet for correct value
+#define    INPUT_PIN_ALT_FUNC		5		//CTIMER Capture input
 
 //This is the Dshot/PWM timer
 #define    IC_TIMER_CHANNEL    		LL_TIM_CHANNEL_CH1 //TODO is this needed for us?
@@ -3435,54 +3435,54 @@
 #define    IC_DMA_IRQ_NAME         	DMA_CH0_IRQn
 
 //TODO set correct port pins
-#define PHASE_A_PIN_LOW       		7 //0	//Pin number
+#define PHASE_A_PIN_LOW       		0	//Pin number
 #define PHASE_A_PORT_LOW   			PORT3	//PORT number
 #define PHASE_A_GPIO_LOW   			GPIO3	//GPIO number
-#define PHASE_A_PIN_HIGH       		6 //1
+#define PHASE_A_PIN_HIGH       		1
 #define PHASE_A_PORT_HIGH    		PORT3
 #define PHASE_A_GPIO_HIGH			GPIO3
 
-#define PHASE_B_PIN_LOW         	9
+#define PHASE_B_PIN_LOW         	8
 #define PHASE_B_PORT_LOW     		PORT3
 #define PHASE_B_GPIO_LOW			GPIO3
-#define PHASE_B_PIN_HIGH      		8
+#define PHASE_B_PIN_HIGH      		9
 #define PHASE_B_PORT_HIGH   		PORT3
 #define PHASE_B_GPIO_HIGH			GPIO3
 
-#define PHASE_C_PIN_LOW       		11
+#define PHASE_C_PIN_LOW       		10
 #define PHASE_C_PORT_LOW   			PORT3
 #define PHASE_C_GPIO_LOW			GPIO3
-#define PHASE_C_PIN_HIGH   			10
+#define PHASE_C_PIN_HIGH   			11
 #define PHASE_C_PORT_HIGH			PORT3
 #define PHASE_C_GPIO_HIGH			GPIO3
 
-#define PHASE_A_COMP_INP  	2  		//P1.4 COMP0_IN2
+#define PHASE_A_COMP_INP  	3  		//P1.0 COMP0_IN3
 #define PHASE_A_COMP_UNIT 	CMP0
-#define PHASE_B_COMP_INP  	2  		//P1.5 COMP1_IN2
+#define PHASE_B_COMP_INP  	3  		//P1.1 COMP1_IN3
 #define PHASE_B_COMP_UNIT 	CMP1
-#define PHASE_C_COMP_INP  	0  		//P2.3 COMP1_IN0
-#define PHASE_C_COMP_UNIT 	CMP1
+#define PHASE_C_COMP_INP  	1  		//P1.3 COMP0_IN1
+#define PHASE_C_COMP_UNIT 	CMP0
 
-#define COMMON_COMP0_INP	3		//P1.0 COMP0_IN3
-#define COMMON_COMP1_INP	3		//P1.1 COMP1_IN3
+#define COMMON_COMP0_INP	0		//P2.2 COMP0_IN0
+#define COMMON_COMP1_INP	0		//P2.3 COMP1_IN0
 
 //TODO set correct UART pins and module
-#define SERIAL_TELEMETRY				LPUART2
-#define SERIAL_TELEMETRY_MODULE 		2
-#define SERIAL_TELEMETRY_TX_PORT 		PORT1
-#define SERIAL_TELEMETRY_TX_PIN 		13
-#define SERIAL_TELEMETRY_TX_ALT_FUNC 	3
+#define SERIAL_TELEMETRY				LPUART1
+#define SERIAL_TELEMETRY_MODULE 		1
+#define SERIAL_TELEMETRY_TX_PORT 		PORT1	//P1.9
+#define SERIAL_TELEMETRY_TX_PIN 		9
+#define SERIAL_TELEMETRY_TX_ALT_FUNC 	2
 //#define SERIAL_TELEMETRY_RX_PORT 		PORT2
 //#define SERIAL_TELEMETRY_RX_PIN 		9
 //#define SERIAL_TELEMETRY_RX_ALT_FUNC 	3
 
 //TODO set correct ADC pins and channels
-#define CURRENT_SENSE_ADC_PIN     	2//12		//P2.2 (FRDM-LVBLDC)
-#define VOLTAGE_SENSE_ADC_PIN      	1//16 		//P2.1 (FRDM-LVBLDC)
+#define CURRENT_SENSE_ADC_PIN     	7		//P2.7
+#define VOLTAGE_SENSE_ADC_PIN      	16		//P2.16
 #define SENSE_ADC_PORT 				PORT2
 
-#define CURRENT_ADC_CHANNEL         4//5
-#define VOLTAGE_ADC_CHANNEL         1//6
+#define CURRENT_ADC_CHANNEL         7
+#define VOLTAGE_ADC_CHANNEL         6
 #define TEMP_ADC_CHANNEL 			26
 
 #endif

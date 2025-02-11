@@ -848,9 +848,6 @@ void commutate()
  */
 void PeriodElapsedCallback()
 {
-    //TODO remove this
-    GPIO3->PTOR = (1 << 30);
-
     DISABLE_COM_TIMER_INT(); // disable interrupt
     commutate();
     commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
@@ -897,8 +894,6 @@ void interruptRoutine()
                 return;
             }
         }
-            //TODO remove this
-            GPIO2->PTOR = (1 << 0);
     __disable_irq();
 	maskPhaseInterrupts();
 	thiszctime = INTERVAL_TIMER_COUNT;

@@ -35,7 +35,7 @@ void initComp0(void)
 	//clock source 3: CMPn function clock as defined in MRCC_CMP0_RR_CLKSEL
 	modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FUNC_CLK_SEL_MASK, LPCMP_CCR1_FUNC_CLK_SEL(3));
 
-	//Select CMP0_IN0 as plus input (BEMF_COMMON)
+	//Select BEMF_COMMON as plus input
 	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP0_INP));
 
 	//Enable high speed comparator mode
@@ -74,7 +74,7 @@ void initComp1(void)
 	//clock source 3: CMPn function clock as defined in MRCC_CMP1_RR_CLKSEL
 	modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FUNC_CLK_SEL_MASK, LPCMP_CCR1_FUNC_CLK_SEL(3));
 
-	//Select CMP1_IN0 as plus input (BEMF_COMMON)
+	//Select BEMF_COMMON as plus input
 	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP1_INP));
 
 	//Enable high speed comparator mode
