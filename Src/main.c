@@ -260,7 +260,7 @@ void zcfoundroutine(void);
 //TODO use this to bypass Dshot for testing
 //#define FIXED_SPEED_MODE  // bypasses input signal and runs at a fixed rpm
 // using the speed control loop PID 
-//#define FIXED_SPEED_MODE_RPM  2000  //
+//#define FIXED_SPEED_MODE_RPM  1000  //
 // intended final rpm , ensure pole pair numbers are entered correctly in config
 // tool.
 
@@ -825,12 +825,15 @@ void commutate()
     }
     __enable_irq();
     changeCompInput();
-//	if (average_interval > 2500) {
-//      old_routine = 1;
-//   }
+#ifndef NO_POLLING_START
+	if (average_interval > 2500) {
+      old_routine = 1;
+   }
+#endif
     bemfcounter = 0;
     zcfound = 0;
-   commutation_intervals[step - 1] = commutation_interval; // just used to calulate average
+    commutation_intervals[step - 1] = commutation_interval; // just used to calulate average
+    e_com_time = ((commutation_intervals[0] + commutation_intervals[1] + commutation_intervals[2] + commutation_intervals[3] + commutation_intervals[4] + commutation_intervals[5]) + 4) >> 1; // COMMUTATION INTERVAL IS 0.5US INCREMENTS
 #ifdef USE_PULSE_OUT
 		if(rising){
 			GPIOB->scr = GPIO_PINS_8;
@@ -849,15 +852,18 @@ void commutate()
 void PeriodElapsedCallback()
 {
     DISABLE_COM_TIMER_INT(); // disable interrupt
+
     commutate();
-    commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
-//    commutation_interval = (3 * commutation_interval + thiszctime) >> 3;	//TODO remove this
+//    commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
+    commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1)) >> 1;
+//    commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1)) >> 2;
   	if (!eepromBuffer.auto_advance) {
 	  advance = (commutation_interval >> 3) * temp_advance; // 60 divde 8 7.5 degree increments
 	} else {
 	  advance = (commutation_interval * auto_advance_level) >> 6; // 60 divde 64 0.9375 degree increments
     }
     waitTime = (commutation_interval >> 1) - advance;
+//    waitTime = (commutation_interval >> 2) - advance;	//This does not improve
     if (!old_routine) {
         enableCompInterrupts(); // enable comp interrupt
     }
@@ -886,6 +892,9 @@ void interruptRoutine()
         }
     }
         for (int i = 0; i < filter_level; i++) {
+        	//TODO Remove this
+        	GPIO3->PTOR = (1 << 28); //ENC_I
+
 #ifdef MCU_F031
             if (((current_GPIO_PORT->IDR & current_GPIO_PIN) == !(rising))) {
 #else
@@ -895,9 +904,15 @@ void interruptRoutine()
             }
         }
     __disable_irq();
-	maskPhaseInterrupts();
-	thiszctime = INTERVAL_TIMER_COUNT;
+    maskPhaseInterrupts();
+    lastzctime = thiszctime;
+    thiszctime = INTERVAL_TIMER_COUNT;
+//    thiszctime = INTERVAL_TIMER_COUNT / 2;
     SET_INTERVAL_TIMER_COUNT(0);
+
+//	//TODO Remove this
+//	GPIO3->PTOR = (1 << 28); //ENC_I
+
     SET_AND_ENABLE_COM_INT(waitTime+1); // enable COM_TIMER interrupt
     __enable_irq();
 }
@@ -905,7 +920,7 @@ void interruptRoutine()
 void startMotor()
 {
     if (running == 0) {
-        commutate();
+    	commutate();
         commutation_interval = 10000;
         SET_INTERVAL_TIMER_COUNT(5000);
         running = 1;
@@ -1659,6 +1674,7 @@ int main(void)
 
     eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
     eepromBuffer.advance_level = 2;
+//    eepromBuffer.auto_advance = 1;
     eepromBuffer.pwm_frequency = 24;
     eepromBuffer.startup_power = 100;
     eepromBuffer.motor_kv = 55;
@@ -1973,8 +1989,11 @@ if(zero_crosses < 5){
 #endif
         if (send_telemetry) {
 #ifdef USE_SERIAL_TELEMETRY
-            makeTelemPackage(degrees_celsius, battery_voltage, actual_current,
-                (uint16_t)consumed_current, e_rpm);
+//            makeTelemPackage(degrees_celsius, battery_voltage, actual_current,
+//                (uint16_t)consumed_current, e_rpm);
+        	//Used for real-time debugging variables
+        	makeTelemPackage(0, (uint16_t)commutation_interval, waitTime,
+        	                (uint16_t)k_erpm, 0);
 
             send_telem_DMA();
             send_telemetry = 0;

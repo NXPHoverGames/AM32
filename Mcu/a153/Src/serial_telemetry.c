@@ -7,7 +7,8 @@
 
 #include "serial_telemetry.h"
 
-uint8_t aTxBuffer[10];
+//uint8_t aTxBuffer[10];
+uint8_t aTxBuffer[18];
 uint8_t nbDataToTransmit = sizeof(aTxBuffer);
 
 /*
@@ -106,40 +107,89 @@ for( i=0; i<BufLen; i++) crc = update_crc8(Buf[i], crc);
 return (crc);
 }
 
+//uint8_t conf(int8_t input)
+//{
+//	if (input > 9)
+//	{
+//		return ('A' + (input - 10));
+//	}
+//	else
+//	{
+//		return ('0' + input);
+//	}
+//}
+
+//void ascii(uint16_t input)
+//{
+//	a = conf((input >> 3) % 0xf);
+//	b = conf((input >> 2) % 0x7);
+//	c = conf((input >> 1) % 0x3);
+//	d = conf((input >> 0) % 0x1);
+//}
+
 /*
  * @brief 	Makes the telemetry package to send via UART
  */
 void makeTelemPackage(uint8_t temp, uint16_t voltage, uint16_t current, uint16_t consumption, uint16_t e_rpm){
-    aTxBuffer[0] = temp; // temperature
+	//TODO remove this
 
-    aTxBuffer[1] = (voltage >> 8) & 0xFF; // voltage hB
-    aTxBuffer[2] = voltage & 0xFF; // voltage   lowB
+	char a = '0' + (voltage / 10000);
+	char b = '0' + ((voltage % 10000) / 1000);
+	char c = '0' + ((voltage % 1000) / 100);
+	char d = '0' + ((voltage % 100) / 10);
+	char e = '0' + ((voltage % 10));
 
-    aTxBuffer[3] = (current >> 8) & 0xFF; // current
-    aTxBuffer[4] = current & 0xFF; // divide by 10 for Amps
+	char f = '0' + (current / 10000);
+	char g = '0' + ((current % 10000) / 1000);
+	char h = '0' + ((current % 1000) / 100);
+	char i = '0' + ((current % 100) / 10);
+	char j = '0' + ((current % 10));
 
-    aTxBuffer[5] = (consumption >> 8) & 0xFF; // consumption
-    aTxBuffer[6] = consumption & 0xFF; //  in mAh
+	char k = '0' + (consumption / 10000);
+	char l = '0' + ((consumption % 10000) / 1000);
+	char m = '0' + ((consumption % 1000) / 100);
+	char n = '0' + ((consumption % 100) / 10);
+	char o = '0' + ((consumption % 10));
 
-    aTxBuffer[7] = (e_rpm >> 8) & 0xFF; //
-    aTxBuffer[8] = e_rpm & 0xFF; // eRpM *100
+    aTxBuffer[0] = a;
+    aTxBuffer[1] = b;
+    aTxBuffer[2] = c;
+    aTxBuffer[3] = d;
+    aTxBuffer[4] = e;
 
-    aTxBuffer[9] = get_crc8(aTxBuffer, 9);
+    aTxBuffer[5] = 0x20; // Space
 
-//    aTxBuffer[0] = 65; // temperature
+    aTxBuffer[6] = f;
+    aTxBuffer[7] = g;
+    aTxBuffer[8] = h;
+    aTxBuffer[9] = i;
+    aTxBuffer[10] = j;
+
+    aTxBuffer[11] = 0x20; //Space
+
+    aTxBuffer[12] = k;
+    aTxBuffer[13] = l;
+    aTxBuffer[14] = m;
+    aTxBuffer[15] = n;
+    aTxBuffer[16] = o;
+
+    aTxBuffer[17] = 0xd; //Carriage return
+
+	//TODO uncomment this
+//    aTxBuffer[0] = temp; // temperature
 //
-//    aTxBuffer[1] = 66; // voltage hB
-//    aTxBuffer[2] = 67; // voltage   lowB
+//    aTxBuffer[1] = (voltage >> 8) & 0xFF; // voltage hB
+//    aTxBuffer[2] = voltage & 0xFF; // voltage   lowB
 //
-//    aTxBuffer[3] = 68; // current
-//    aTxBuffer[4] = 69; // divide by 10 for Amps
+//    aTxBuffer[3] = (current >> 8) & 0xFF; // current
+//    aTxBuffer[4] = current & 0xFF; // divide by 10 for Amps
 //
-//    aTxBuffer[5] = 70; // consumption
-//    aTxBuffer[6] = 71; //  in mAh
+//    aTxBuffer[5] = (consumption >> 8) & 0xFF; // consumption
+//    aTxBuffer[6] = consumption & 0xFF; //  in mAh
 //
-//    aTxBuffer[7] = 72; //
-//    aTxBuffer[8] = 73; // eRpM *100
+//    aTxBuffer[7] = (e_rpm >> 8) & 0xFF; //
+//    aTxBuffer[8] = e_rpm & 0xFF; // eRpM *100
 //
-//    aTxBuffer[9] = 74;
+//    aTxBuffer[9] = get_crc8(aTxBuffer, 9);
 }
 

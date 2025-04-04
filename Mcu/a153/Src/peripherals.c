@@ -74,6 +74,7 @@ void SystemClock_Config(void)
 	//96MHz = 1
 	//192MHz = 2
 	modifyReg32(&FMU0->FCTRL, FMU_FCTRL_RWSC_MASK, FMU_FCTRL_RWSC(2));
+//	modifyReg32(&FMU0->FCTRL, FMU_FCTRL_RWSC_MASK, FMU_FCTRL_RWSC(1));
 
 	//Set SRAM to support higher voltage levels
 	modifyReg32(&SPC0->SRAMCTL, SPC_SRAMCTL_VSM_MASK, SPC_SRAMCTL_VSM(2));
@@ -90,14 +91,16 @@ void SystemClock_Config(void)
 	//Clear the SRAM voltage update request
 	modifyReg32(&SPC0->SRAMCTL, SPC_SRAMCTL_REQ_MASK, 0);
 
-	//Set System clock divider to 2 to make the CPU and SYSTEM clock 96MHz (this is the max clock)
-	modifyReg32(&SYSCON->AHBCLKDIV, SYSCON_AHBCLKDIV_DIV_MASK, SYSCON_AHBCLKDIV_DIV(2));
+	//Set System clock divider to 2 to make the CPU and SYSTEM clock 96MHz (this is the max clock) divider value = DIV + 1
+	modifyReg32(&SYSCON->AHBCLKDIV, SYSCON_AHBCLKDIV_DIV_MASK, SYSCON_AHBCLKDIV_DIV(1));
+//	modifyReg32(&SYSCON->AHBCLKDIV, SYSCON_AHBCLKDIV_DIV_MASK, SYSCON_AHBCLKDIV_DIV(0));
 
 	//Unlock FIRC control status register
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_LK_MASK, 0);
 
 	//Set the Fast Internal Reference Clock (FIRC) to 192MHz
 	modifyReg32(&SCG0->FIRCCFG, SCG_FIRCCFG_FREQ_SEL_MASK, SCG_FIRCCFG_FREQ_SEL(7));
+//	modifyReg32(&SCG0->FIRCCFG, SCG_FIRCCFG_FREQ_SEL_MASK, SCG_FIRCCFG_FREQ_SEL(5));
 
 	//Enable FRO_HF clock to peripherals
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_FIRC_FCLK_PERIPH_EN_MASK, SCG_FIRCCSR_FIRC_FCLK_PERIPH_EN(1));
@@ -171,30 +174,25 @@ void initGPIO(void)
 	//Freeze clock configuration registers access
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
-	//Enable GPIO pins for testing/debugging. P3.30, P3.31, P2.0, P1.13. Set them to output
-//	modifyReg32(&PORT3->PCR[30],
-//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-//			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-//	modifyReg32(&GPIO3->PDDR, 0, (1 << 30));
-//	GPIO3->PCOR = (1 << 30);
-//
-//	modifyReg32(&PORT2->PCR[0],
-//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-//			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-//	modifyReg32(&GPIO2->PDDR, 0, (1 << 0));
-//	GPIO2->PCOR = (1 << 0);
+	//Enable GPIO pins for testing/debugging. P3.27, P2.17, P3.28. Set them to output
+	modifyReg32(&PORT3->PCR[27],	//ENC_A
+			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+	modifyReg32(&GPIO3->PDDR, 0, (1 << 27));
+	GPIO3->PCOR = (1 << 27);
 
-//	modifyReg32(&PORT1->PCR[13],
+	//pin 12, 13 and 14 cannot be used as these are occupied by USB FS on the MCXA14x and MCXA15x
+//	modifyReg32(&PORT2->PCR[17],	//ENC_B
 //			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
 //			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-//	modifyReg32(&GPIO1->PDDR, 0, (1 << 13));
-//	GPIO1->PCOR = (1 << 13);
+//	modifyReg32(&GPIO2->PDDR, 0, (1 << 17));
+//	GPIO2->PCOR = (1 << 17);
 
-//	modifyReg32(&PORT1->PCR[12],
-//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-//			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
-//	modifyReg32(&GPIO1->PDDR, 0, (1 << 12));
-//	GPIO1->PCOR = (1 << 12);
+	modifyReg32(&PORT3->PCR[28],	//ENC_I
+			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+	modifyReg32(&GPIO3->PDDR, 0, (1 << 28));
+	GPIO3->PCOR = (1 << 28);
 }
 
 void enableCorePeripherals()
@@ -204,6 +202,28 @@ void enableCorePeripherals()
 
 	//Enable PWM
 	enableFlexPWM();
+
+//	//Unlock clock configuration registers access
+//	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
+//
+//	modifyReg32(&MRCC0->MRCC_CLKOUT_CLKSEL, MRCC_MRCC_CLKOUT_CLKSEL_MUX_MASK, MRCC_MRCC_CLKOUT_CLKSEL_MUX(0));
+//
+//	modifyReg32(&MRCC0->MRCC_CLKOUT_CLKDIV,
+//			MRCC_MRCC_CLKOUT_CLKDIV_HALT_MASK | MRCC_MRCC_CLKOUT_CLKDIV_DIV_MASK,
+//			MRCC_MRCC_CLKOUT_CLKDIV_DIV(9));
+//
+//	//Freeze clock configuration registers access
+//	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
+//
+//	//Enable CLKOUT on P3_6
+//	modifyReg32(&PORT3->PCR[6],
+//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+//			PORT_PCR_MUX(1));
+//
+//	//Enable CLKOUT on P3_8
+//	modifyReg32(&PORT3->PCR[8],
+//			PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+//			PORT_PCR_MUX(12));
 
 	//Enable the timers
 #ifndef USE_ADC_INPUT

@@ -3485,6 +3485,8 @@
 #define VOLTAGE_ADC_CHANNEL         6
 #define TEMP_ADC_CHANNEL 			26
 
+//#define LOOP_FREQUENCY_HZ 10000
+
 #endif
 
 /************************************ MCU COMMON PERIPHERALS
@@ -3708,7 +3710,7 @@
 #define TEN_KHZ_TIMER      LPTMR0
 #define UTILITY_TIMER      SysTick
 #define COM_TIMER          CTIMER1
-#define TIM1_AUTORELOAD    8000		//Reloads the PWM at 24kHz
+#define TIM1_AUTORELOAD    8000		//Reloads the PWM at 24kHz. 192MHz clock for FlexPWM
 
 //Define the DMA channels used
 #define DMA_CH_DshotPWM			0

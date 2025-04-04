@@ -31,6 +31,9 @@ char input_ready = 0;
  */
 void CMP0_IRQHandler(void)
 {
+	//TODO remove this
+	GPIO3->PTOR = (1 << 27);	//ENC_A
+
 	//Call function from main.c
 	interruptRoutine();
 
@@ -43,6 +46,9 @@ void CMP0_IRQHandler(void)
  */
 void CMP1_IRQHandler(void)
 {
+	//TODO remove this
+	GPIO3->PTOR = (1 << 27);	//ENC_A
+
 	//Call function from main.c
 	interruptRoutine();
 

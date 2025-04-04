@@ -72,10 +72,15 @@ void initFlexPWM(void)
 		//Set init PWM23 value to 1 after a force event
 //		modifyReg16(&FLEXPWM0->SM[submodule].CTRL2, PWM_CTRL2_PWM23_INIT_MASK, PWM_CTRL2_PWM23_INIT(1));
 
+		//Disable fault protection as no fault input is sourced
+		modifyReg16(&FLEXPWM0->SM[submodule].DISMAP[0],
+				PWM_DISMAP_DIS0A_MASK | PWM_DISMAP_DIS0B_MASK | PWM_DISMAP_DIS0X_MASK,
+				0);
+
 		//Invert PWMA and PWMB outputs
-//		modifyReg16(&FLEXPWM0->SM[submodule].OCTRL,
-//				PWM_OCTRL_POLA_MASK | PWM_OCTRL_POLB_MASK,
-//				PWM_OCTRL_POLA(1) | PWM_OCTRL_POLB(1));
+		modifyReg16(&FLEXPWM0->SM[submodule].OCTRL,
+				PWM_OCTRL_POLA_MASK | PWM_OCTRL_POLB_MASK,
+				PWM_OCTRL_POLA(1) | PWM_OCTRL_POLB(1));
 	}
 
 	//Set that the force signal from submodule 0 also forces updates to the other submodules.
@@ -103,7 +108,7 @@ void initFlexPWM(void)
 	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_CLK_SEL_MASK, PWM_CTRL2_CLK_SEL(2));
 
 	//Set that a logic 1 on the fault input causes a fault condition
-	modifyReg16(&FLEXPWM0->FCTRL, PWM_FCTRL_FLVL_MASK, PWM_FCTRL_FLVL(0xf));
+//	modifyReg16(&FLEXPWM0->FCTRL, PWM_FCTRL_FLVL_MASK, PWM_FCTRL_FLVL(0xf));
 
 	//Enable all six PWM outputs
 	FLEXPWM0->OUTEN = PWM_OUTEN_PWMA_EN_MASK | PWM_OUTEN_PWMB_EN_MASK;

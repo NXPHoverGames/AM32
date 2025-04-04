@@ -10,6 +10,18 @@
 
 LPCMP_Type *MAIN_COMP = CMP0;
 
+//int filt_sample_per = 40;	//40 = 300kHz sampling freq
+//int filt_cnt = 5;			//Set to 5 so we sample at 60kHz which causes it to precisely trigger only once every rising/falling BEMF
+//int sample_en = 0;
+
+int filt_sample_per = 4;	//4 = 3MHz
+int filt_cnt = 5;			//Set a sampling freq of 600kHz, so 5*600kHz = 3MHz total sampling freq
+int sample_en = 0;
+
+//int filt_sample_per = 0;
+//int filt_cnt = 0;
+//int sample_en = 0;
+
 void initComp0(void)
 {
 	//Unlock clock configuration registers access
@@ -39,11 +51,16 @@ void initComp0(void)
 	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP0_INP));
 
 	//Enable high speed comparator mode
-	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
+//	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
 
-	//TODO fix comparator. could be hardware?
-	//Set comparator hysteresis to 30mV
-//	modifyReg32(&CMP0->CCR2, LPCMP_CCR2_HYSTCTR_MASK, LPCMP_CCR2_HYSTCTR(3));
+	//Set filter sample period to x clock cycles
+	modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
+
+	//Set filter sample count to x samples
+	modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+
+	//set sampling on or off
+	modifyReg32(&CMP0->CCR1, LPCMP_CCR1_SAMPLE_EN_MASK, LPCMP_CCR1_SAMPLE_EN(sample_en));
 }
 
 void initComp1(void)
@@ -78,10 +95,16 @@ void initComp1(void)
 	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_PSEL_MASK, LPCMP_CCR2_PSEL(COMMON_COMP1_INP));
 
 	//Enable high speed comparator mode
-	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
+//	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_CMP_HPMD_MASK, LPCMP_CCR2_CMP_HPMD(1));
 
-	//Set comparator hysteresis to 30mV
-//	modifyReg32(&CMP1->CCR2, LPCMP_CCR2_HYSTCTR_MASK, LPCMP_CCR2_HYSTCTR(3));
+	//Set filter sample period to x clock cycles
+	modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
+
+	//Set filter sample count to x samples
+	modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+
+	//set sampling on or off
+	modifyReg32(&CMP1->CCR1, LPCMP_CCR1_SAMPLE_EN_MASK, LPCMP_CCR1_SAMPLE_EN(sample_en));
 }
 
 /*

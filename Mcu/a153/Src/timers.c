@@ -129,10 +129,14 @@ void initComTimer(void)
 	//Set CTIMER1 prescaler to /6
 	CTIMER1->PR = 5;
 
-	//Enable reset and interrupt on match0 event
+	//Enable reset on match0 event.
+	//Do not yet enable interrupt on match0 event, as this causes the commutation to start and stagnate, drawing lots of current!
+//	modifyReg32(&CTIMER1->MCR,
+//			CTIMER_MCR_MR0R_MASK | CTIMER_MCR_MR0I_MASK,
+//			CTIMER_MCR_MR0R(1) | CTIMER_MCR_MR0I(1));
 	modifyReg32(&CTIMER1->MCR,
-			CTIMER_MCR_MR0R_MASK | CTIMER_MCR_MR0I_MASK,
-			CTIMER_MCR_MR0R(1) | CTIMER_MCR_MR0I(1));
+				CTIMER_MCR_MR0R_MASK | CTIMER_MCR_MR0I_MASK,
+				CTIMER_MCR_MR0R(1));
 
 	//Set shadow match0 event at 30Hz
 //	CTIMER1->MSR[0] = 65535;
@@ -173,7 +177,8 @@ void initIntervalTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set CTIMER2 prescaler to /6
-	CTIMER2->PR = 5;
+//	CTIMER2->PR = 5;
+	CTIMER2->PR = 11;	//Set to 1MHz. This causes the motor to not stop spinning faster.
 }
 
 /*
