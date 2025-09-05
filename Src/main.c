@@ -892,9 +892,6 @@ void interruptRoutine()
         }
     }
         for (int i = 0; i < filter_level; i++) {
-        	//TODO Remove this
-        	GPIO3->PTOR = (1 << 28); //ENC_I
-
 #ifdef MCU_F031
             if (((current_GPIO_PORT->IDR & current_GPIO_PIN) == !(rising))) {
 #else
@@ -903,6 +900,9 @@ void interruptRoutine()
                 return;
             }
         }
+    //TODO Remove this
+    GPIO3->PTOR = (1 << 28); //ENC_I
+
     __disable_irq();
     maskPhaseInterrupts();
     lastzctime = thiszctime;

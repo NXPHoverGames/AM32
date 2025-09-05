@@ -18,3 +18,5 @@ Keil_Projects/Listings
 .DS_Store
 .vscode/settings.json
 *.launch
+/Debug/
+windows-tools.zip

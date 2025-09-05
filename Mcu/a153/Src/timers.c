@@ -177,8 +177,8 @@ void initIntervalTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set CTIMER2 prescaler to /6
-//	CTIMER2->PR = 5;
-	CTIMER2->PR = 11;	//Set to 1MHz. This causes the motor to not stop spinning faster.
+	CTIMER2->PR = 5;
+//	CTIMER2->PR = 11;	//Set to 1MHz. This allows the motor to spin faster.
 }
 
 /*
