@@ -823,8 +823,9 @@ void commutate()
     if (!prop_brake_active) {
         comStep(step);
     }
-    __enable_irq();
     changeCompInput();
+    __enable_irq();
+//    changeCompInput();	//TODO change this back
 #ifndef NO_POLLING_START
 	if (average_interval > 2500) {
       old_routine = 1;
@@ -853,6 +854,9 @@ void PeriodElapsedCallback()
 {
     DISABLE_COM_TIMER_INT(); // disable interrupt
 
+    //TODO Remove this
+    GPIO2->PTOR = (1 << 12); //SPI_SCK
+
     commutate();
 //    commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
     commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1)) >> 1;
@@ -879,6 +883,9 @@ void PeriodElapsedCallback()
  */
 void interruptRoutine()
 {
+	//TODO remove this
+	GPIO3->PTOR = (1 << 27);	//ENC_A
+
    if (average_interval > 125) {
         if ((INTERVAL_TIMER_COUNT < 125) && (duty_cycle < 600) && (zero_crosses < 500)) { // should be impossible, desync?exit anyway
            return;
@@ -1673,11 +1680,11 @@ int main(void)
     eepromBuffer.variable_pwm = 1;
 
     eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
-    eepromBuffer.advance_level = 2;
+    eepromBuffer.advance_level = 2;//2;
 //    eepromBuffer.auto_advance = 1;
-    eepromBuffer.pwm_frequency = 24;
+    eepromBuffer.pwm_frequency = 24;//24;
     eepromBuffer.startup_power = 100;
-    eepromBuffer.motor_kv = 55;
+    eepromBuffer.motor_kv = 255;//55;
     eepromBuffer.motor_poles = 14;//14;
     eepromBuffer.beep_volume = 5;
     eepromBuffer.servo.low_threshold = 128;

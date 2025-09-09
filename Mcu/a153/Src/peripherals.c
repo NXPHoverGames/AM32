@@ -193,6 +193,12 @@ void initGPIO(void)
 			PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
 	modifyReg32(&GPIO3->PDDR, 0, (1 << 28));
 	GPIO3->PCOR = (1 << 28);
+
+	modifyReg32(&PORT2->PCR[12],	//SPI_SCK
+				PORT_PCR_MUX_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
+				PORT_PCR_MUX(0) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+	modifyReg32(&GPIO2->PDDR, 0, (1 << 12));
+	GPIO2->PCOR = (1 << 12);
 }
 
 void enableCorePeripherals()
