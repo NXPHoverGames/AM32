@@ -23,6 +23,7 @@ extern char dshot_telemetry;
 extern char armed;
 extern char out_put;
 extern uint8_t compute_dshot_flag;
+extern uint32_t average_interval;
 
 char input_ready = 0;
 
@@ -31,14 +32,16 @@ char input_ready = 0;
  */
 void CMP0_IRQHandler(void)
 {
-	//TODO remove this
-//	GPIO3->PTOR = (1 << 27);	//ENC_A
-
-	//Call function from main.c
-	interruptRoutine();
-
-	//Clear comparator flags
-	CMP0->CSR = 0x7;
+	//Do extra check to prevent false positive interrupts
+	if((INTERVAL_TIMER_COUNT) > ((average_interval>>1)))
+	{
+		CMP0->CSR = 0x7;
+		interruptRoutine();
+	}
+	else if (getCompOutputLevel() == rising)
+	{
+		CMP0->CSR = 0x7;
+	}
 }
 
 /*
@@ -46,14 +49,16 @@ void CMP0_IRQHandler(void)
  */
 void CMP1_IRQHandler(void)
 {
-	//TODO remove this
-//	GPIO3->PTOR = (1 << 27);	//ENC_A
-
-	//Call function from main.c
-	interruptRoutine();
-
-	//Clear comparator flags
-	CMP1->CSR = 0x7;
+	//Do extra check to prevent false positive interrupts
+	if((INTERVAL_TIMER_COUNT) > ((average_interval>>1)))
+	{
+		CMP1->CSR = 0x7;
+		interruptRoutine();
+	}
+	else if (getCompOutputLevel() == rising)
+	{
+		CMP1->CSR = 0x7;
+	}
 }
 
 /*

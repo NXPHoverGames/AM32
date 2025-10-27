@@ -178,7 +178,7 @@ void initIntervalTimer(void)
 
 	//Set CTIMER2 prescaler to /6
 	CTIMER2->PR = 5;
-//	CTIMER2->PR = 11;	//Set to 1MHz. This allows the motor to spin faster.
+//	CTIMER2->PR = 11;	//Set to 1MHz. This causes the motor to not stop spinning faster.
 }
 
 /*
@@ -302,7 +302,7 @@ inline void resetInputCaptureTimer(void)
 {
 	//Reset timer counter
 	modifyReg32(&CTIMER0->TCR, 0, CTIMER_TCR_CRST(1));
-	delayMicros(2);
+//	delayMicros(2);
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CRST_MASK, 0);
 }
 
