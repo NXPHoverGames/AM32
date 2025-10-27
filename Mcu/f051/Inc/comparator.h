@@ -10,9 +10,9 @@
 #endif /* COMPARATOR_H_ */
 
 // Medium speed comparator
-#define COMP_PA0 0b1100101
-#define COMP_PA4 0b1000101
-#define COMP_PA5 0b1010101
+//#define COMP_PA0 0b1100101
+//#define COMP_PA4 0b1000101
+//#define COMP_PA5 0b1010101
 
 // High speed comparator
 // #define COMP_PA0 0b1100001

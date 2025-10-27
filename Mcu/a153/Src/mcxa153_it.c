@@ -25,7 +25,7 @@ extern char out_put;
 extern uint8_t compute_dshot_flag;
 extern uint32_t average_interval;
 
-char input_ready = 0;
+extern volatile char input_ready;
 
 /*
  * @brief 	Comparator 0 interrupt handler. Is called after a compare event has occurred.

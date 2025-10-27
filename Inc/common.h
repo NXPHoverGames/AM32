@@ -29,18 +29,12 @@ extern uint8_t compute_dshot_flag;
 extern uint16_t battery_voltage;
 extern int16_t actual_current;
 extern uint16_t e_rpm;
-
-#ifdef NXP
-extern char input_ready;
-#endif
+extern uint32_t average_interval;
 
 #ifdef STMICRO
 extern GPIO_TypeDef* current_GPIO_PORT;
-#ifndef MCU_F031
+#if !defined(MCU_F031) && !defined(MCU_G031)
 extern COMP_TypeDef* active_COMP;
-#endif
-#ifdef MCU_F031
-extern char input_ready;
 #endif
 #endif
 #ifdef GIGADEVICES
@@ -55,7 +49,9 @@ extern char dshot_extended_telemetry;
 extern char EDT_ARM_ENABLE;
 extern char EDT_ARMED;
 extern uint16_t send_extended_dshot;
-
+#if defined(NEED_INPUT_READY) || defined(NXP)
+extern volatile char input_ready;
+#endif
 // typedef struct PID{
 //	float error;
 //	float Kp;

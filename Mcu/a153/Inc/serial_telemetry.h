@@ -15,7 +15,7 @@ void makeTelemPackage(uint8_t temp, uint16_t voltage, uint16_t current,
 
 void telem_UART_Init(void);
 void enable_telem_UART(void);
-void send_telem_DMA();
+void send_telem_DMA(uint8_t bytes);
 
 void telem_UART_Init_CH4(void);
 void send_telem_DMA_CH4();

@@ -62,26 +62,90 @@ void SystemClock_Config(void)
   }
 
 #ifdef USE_HSE
-  LL_RCC_HSE_EnableBypass();
-  LL_RCC_HSE_Enable();
-#if HSE_VALUE == 24000000
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_3, 20, LL_RCC_PLLR_DIV_2);
-#else
-#error "Unsupported HSE_VALUE"
-#endif
+    /*
+        Using high-speed external source (HSE)
+        - Default: Bypass mode (external oscillator)
+        - Define USE_HSE_BYPASS to disable bypass (use crystal)
+    */
+    #if defined(USE_HSE_BYPASS) && (USE_HSE_BYPASS == 0)
+        LL_RCC_HSE_DisableBypass(); // Use crystal mode
+    #else
+        LL_RCC_HSE_EnableBypass(); // Default: Use external oscillator
+    #endif
+    LL_RCC_HSE_Enable();
 
-#else
+    // Wait for HSE to be ready
+    while (LL_RCC_HSE_IsReady() != 1U) {}
+
+    #if HSE_VALUE == 24000000
+        LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_3, 20, LL_RCC_PLLR_DIV_2);
+    #elif HSE_VALUE == 16000000
+        LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_2, 20, LL_RCC_PLLR_DIV_2);
+    #elif HSE_VALUE == 8000000
+        LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_1, 20, LL_RCC_PLLR_DIV_2);
+    #else
+        #error "Unsupported HSE_VALUE"
+    #endif
+
+#elif defined(USE_LSE)
+  /*
+    using low speed external oscillator to trim MSI clock
+   */
+
+  // ensure RCC is reset
+  LL_PWR_EnableBkUpAccess();
+  LL_RCC_ForceBackupDomainReset();
+  LL_RCC_ReleaseBackupDomainReset();
+
   LL_RCC_MSI_Enable();
+  LL_RCC_LSI_Enable();
 
-   /* Wait till MSI is ready */
-  while(LL_RCC_MSI_IsReady() != 1)
-  {
+  /* Wait till MSI and LSI are ready */
+  while (LL_RCC_LSI_IsReady() != 1) ;
+  while (LL_RCC_MSI_IsReady() != 1) ;
+  while (LL_PWR_IsActiveFlag_VOS() != 0) ;
 
-  }
+  // setup MSI and LSE
+  LL_RCC_MSI_DisablePLLMode();
+  LL_RCC_LSE_SetDriveCapability(LL_RCC_LSEDRIVE_HIGH);
+#if USE_LSE_BYPASS
+  LL_RCC_LSE_EnableBypass();
+#else
+  LL_RCC_LSE_DisableBypass();
+#endif
+  LL_RCC_LSE_Enable();
+
+  while (LL_RCC_LSE_IsReady() != 1) ;
+  LL_RCC_MSI_EnablePLLMode();
+
+  LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSE);
+  LL_RCC_EnableRTC();
+
   LL_RCC_MSI_EnableRangeSelection();
   LL_RCC_MSI_SetRange(LL_RCC_MSIRANGE_6);
   LL_RCC_MSI_SetCalibTrimming(0);
   LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_MSI, LL_RCC_PLLM_DIV_1, 40, LL_RCC_PLLR_DIV_2);
+
+#elif defined(USE_MSI)
+  /*
+    using medium speed internal oscillator
+   */
+  LL_RCC_MSI_Enable();
+  while(LL_RCC_MSI_IsReady() != 1) ;
+  LL_RCC_MSI_EnableRangeSelection();
+  LL_RCC_MSI_SetRange(LL_RCC_MSIRANGE_6);
+  LL_RCC_MSI_SetCalibTrimming(0);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_MSI, LL_RCC_PLLM_DIV_1, 40, LL_RCC_PLLR_DIV_2);
+#else
+  /*  default to using HSI16, which is best option for no external
+      oscillator
+   */
+  LL_RCC_HSI_Enable();
+
+  /* Wait till HSI is ready */
+  while (LL_RCC_HSI_IsReady() != 1) ;
+
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_2, 20, LL_RCC_PLLR_DIV_2);
 #endif
 
   LL_RCC_PLL_EnableDomain_SYS();
@@ -130,7 +194,7 @@ void MX_COMP1_Init(void)
   NVIC_SetPriority(COMP_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(COMP_IRQn);
 
-  COMP_InitStruct.PowerMode = LL_COMP_POWERMODE_MEDIUMSPEED;
+  COMP_InitStruct.PowerMode = LL_COMP_POWERMODE_HIGHSPEED;
   COMP_InitStruct.InputPlus = LL_COMP_INPUT_PLUS_IO3;
   COMP_InitStruct.InputMinus = LL_COMP_INPUT_MINUS_IO5;
   COMP_InitStruct.InputHysteresis = LL_COMP_HYSTERESIS_NONE;
@@ -188,7 +252,7 @@ void MX_COMP2_Init(void)
   /* USER CODE BEGIN COMP2_Init 1 */
 
   /* USER CODE END COMP2_Init 1 */
-  COMP_InitStruct.PowerMode = LL_COMP_POWERMODE_MEDIUMSPEED;
+  COMP_InitStruct.PowerMode = LL_COMP_POWERMODE_HIGHSPEED;
   COMP_InitStruct.InputPlus = LL_COMP_INPUT_PLUS_IO1;
   COMP_InitStruct.InputMinus = LL_COMP_INPUT_MINUS_IO2;
   COMP_InitStruct.InputHysteresis = LL_COMP_HYSTERESIS_NONE;

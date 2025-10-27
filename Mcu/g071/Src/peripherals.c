@@ -22,8 +22,10 @@ void initCorePeripherals(void)
 {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
+  #ifndef NO_PA11_PA12_REMAP
     LL_SYSCFG_EnablePinRemap(LL_SYSCFG_PIN_RMP_PA11);
     LL_SYSCFG_EnablePinRemap(LL_SYSCFG_PIN_RMP_PA12);
+  #endif
     FLASH->ACR |= FLASH_ACR_PRFTEN; //// prefetch buffer enable
     SystemClock_Config();
     MX_GPIO_Init();
@@ -132,9 +134,9 @@ void MX_COMP1_Init(void)
     COMP_InitStruct.InputMinus = LL_COMP_INPUT_MINUS_IO3;
     COMP_InitStruct.InputHysteresis = LL_COMP_HYSTERESIS_NONE;
     COMP_InitStruct.OutputPolarity = LL_COMP_OUTPUTPOL_NONINVERTED;
-    COMP_InitStruct.OutputBlankingSource = LL_COMP_BLANKINGSRC_TIM1_OC5;
+    COMP_InitStruct.OutputBlankingSource = LL_COMP_BLANKINGSRC_NONE;
     LL_COMP_Init(COMP1, &COMP_InitStruct);
-    LL_COMP_SetPowerMode(COMP1, LL_COMP_POWERMODE_MEDIUMSPEED);
+    LL_COMP_SetPowerMode(COMP1, LL_COMP_POWERMODE_HIGHSPEED);
     LL_COMP_SetCommonWindowMode(__LL_COMP_COMMON_INSTANCE(COMP1),
         LL_COMP_WINDOWMODE_DISABLE);
     LL_COMP_SetCommonWindowOutput(__LL_COMP_COMMON_INSTANCE(COMP1),
@@ -200,9 +202,9 @@ void MX_COMP2_Init(void)
     COMP_InitStruct.InputMinus = LL_COMP_INPUT_MINUS_IO3;
     COMP_InitStruct.InputHysteresis = LL_COMP_HYSTERESIS_NONE;
     COMP_InitStruct.OutputPolarity = LL_COMP_OUTPUTPOL_NONINVERTED;
-    COMP_InitStruct.OutputBlankingSource = LL_COMP_BLANKINGSRC_TIM1_OC5;
+    COMP_InitStruct.OutputBlankingSource = LL_COMP_BLANKINGSRC_NONE;
     LL_COMP_Init(COMP2, &COMP_InitStruct);
-    LL_COMP_SetPowerMode(COMP2, LL_COMP_POWERMODE_MEDIUMSPEED);
+    LL_COMP_SetPowerMode(COMP2, LL_COMP_POWERMODE_HIGHSPEED);
     LL_COMP_SetCommonWindowMode(__LL_COMP_COMMON_INSTANCE(COMP2),
         LL_COMP_WINDOWMODE_DISABLE);
     LL_COMP_SetCommonWindowOutput(__LL_COMP_COMMON_INSTANCE(COMP2),

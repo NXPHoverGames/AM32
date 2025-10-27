@@ -13,6 +13,10 @@
 #include "phaseouts.h"
 #include "targets.h"
 
+#ifndef ERASED_FLASH_BYTE
+#define ERASED_FLASH_BYTE  0xFF
+#endif
+
 uint8_t beep_volume;
 
 void pause(uint16_t ms)
@@ -62,7 +66,8 @@ void playBlueJayTune()
 //    uint16_t frequency;
 //    comStep(3);
 //    // read_flash_bin(blueJayTuneBuffer , eeprom_address + 48 , 128);
-//    for (int i = 0; i < 124; i += 2) {
+//    // first 4 bytes are reserved for rtttl duration, octave, beat, tempo
+//    for (int i = 4; i < 128; i += 2) {
 //        RELOAD_WATCHDOG_COUNTER();
 //        signaltimeout = 0;
 //
@@ -93,8 +98,7 @@ void playStartupTune()
 {
 //    __disable_irq();
 //
-//    uint8_t value = *(uint8_t*)(eeprom_address + 48);
-//    if (value != 0xFF) {
+//    if (eepromBuffer.tune[0] != ERASED_FLASH_BYTE) {
 //        playBlueJayTune();
 //    } else {
 //        SET_AUTO_RELOAD_PWM(TIM1_AUTORELOAD);
