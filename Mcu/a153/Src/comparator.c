@@ -10,22 +10,23 @@
 
 LPCMP_Type *MAIN_COMP = CMP0;
 
+int cmp_hpmd = 0;	//Enable high power (speed) comparator mode
+
 //int filt_sample_per = 40;	//40 = 300kHz sampling freq
 //int filt_cnt = 5;			//Set to 5 so we sample at 60kHz which causes it to precisely trigger only once every rising/falling BEMF
 //int sample_en = 0;
 
-//int filt_sample_per = 4;	//4 = 3MHz
-//int filt_cnt = 5;			//Set a sampling freq of 600kHz, so 5*600kHz = 3MHz total sampling freq
+int filt_sample_per = 4;	//4 = 3MHz
+int filt_cnt = 5;			//Set a sampling freq of 600kHz, so 5*600kHz = 3MHz total sampling freq
+int sample_en = 0;
+
+//int filt_sample_per = 6;
+//int filt_cnt = 1;
 //int sample_en = 0;
 
-//int filt_sample_per = 2;
-//int filt_cnt = 7;
-//int sample_en = 0;
-
-int filt_sample_per = 0;
-int filt_cnt = 1;
-int sample_en = 1;
-int cmp_hpmd = 0;
+//int filt_sample_per = 0;
+//int filt_cnt = 1;
+//int sample_en = 1;
 
 //int filt_sample_per = 0;
 //int filt_cnt = 0;
@@ -135,10 +136,14 @@ void disableComparators(void)
 	modifyReg32(&CMP1->CCR0, LPCMP_CCR0_CMP_EN(1), 0);
 }
 
+#ifdef COMP_OUT_INLINE
+
+#else
 uint8_t getCompOutputLevel()
 {
 	return ((MAIN_COMP->CSR & LPCMP_CSR_COUT_MASK) >> LPCMP_CSR_COUT_SHIFT);
 }
+#endif
 
 /*
  * @brief 	Disables the comparator interrupt

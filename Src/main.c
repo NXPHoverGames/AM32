@@ -588,6 +588,35 @@ void loadEEpromSettings()
 {
     read_flash_bin(eepromBuffer.buffer, eeprom_address, sizeof(eepromBuffer.buffer));
 
+    //TODO remove this
+    eepromBuffer.eeprom_version = 2;
+    eepromBuffer.version.major = 1;
+    eepromBuffer.version.minor = 23;
+    eepromBuffer.comp_pwm = 1;
+    eepromBuffer.variable_pwm = 1;
+
+    eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
+//    eepromBuffer.advance_level = 2;//2;
+    eepromBuffer.auto_advance = 1;
+    eepromBuffer.pwm_frequency = 24;//24;
+    eepromBuffer.startup_power = 100;
+    eepromBuffer.motor_kv = 55; //255; //55;
+    eepromBuffer.motor_poles = 14; //9; //14;
+    eepromBuffer.beep_volume = 5;
+    eepromBuffer.servo.low_threshold = 128;
+    eepromBuffer.servo.high_threshold = 128;
+    eepromBuffer.servo.neutral = 128;
+    eepromBuffer.servo.dead_band = 50;
+    eepromBuffer.low_cell_volt_cutoff = 50;
+    eepromBuffer.sine_mode_changeover_thottle_level = 15;
+    eepromBuffer.drag_brake_strength = 10;
+    eepromBuffer.driving_brake_strength = 10;
+    eepromBuffer.limits.temperature = 141;
+    eepromBuffer.limits.current = 102;
+    eepromBuffer.sine_mode_power = 6;
+
+    eepromBuffer.telementry_on_interval = 1;
+
     if (eepromBuffer.advance_level > 3) {
         eepromBuffer.advance_level = 2;
     }
@@ -855,14 +884,15 @@ void PeriodElapsedCallback()
     DISABLE_COM_TIMER_INT(); // disable interrupt
 
     //TODO Remove this
-    GPIO2->PTOR = (1 << 12); //SPI_SCK
+//    GPIO2->PTOR = (1 << 12); //SPI_SCK
 
     commutate();
 //    commutation_interval = (3 * commutation_interval + thiszctime) >> 2;
     commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1)) >> 1;
 //    commutation_interval = ((commutation_interval)+((lastzctime + thiszctime) >> 1)) >> 2;
   	if (!eepromBuffer.auto_advance) {
-	  advance = (commutation_interval >> 3) * temp_advance; // 60 divde 8 7.5 degree increments
+//	  advance = (commutation_interval >> 3) * temp_advance; // 60 divde 8 7.5 degree increments
+  		advance = (commutation_interval * temp_advance) >> 6; // 60 divde 64 0.9375 degree increments
 	} else {
 	  advance = (commutation_interval * auto_advance_level) >> 6; // 60 divde 64 0.9375 degree increments
     }
@@ -884,31 +914,35 @@ void PeriodElapsedCallback()
 void interruptRoutine()
 {
 	//TODO remove this
-	GPIO3->PTOR = (1 << 27);	//ENC_A
+//	GPIO3->PTOR = (1 << 27);	//ENC_A
 
-   if (average_interval > 125) {
-        if ((INTERVAL_TIMER_COUNT < 125) && (duty_cycle < 600) && (zero_crosses < 500)) { // should be impossible, desync?exit anyway
-           return;
-        }
-        stuckcounter++; // stuck at 100 interrupts before the main loop happens
-                        // again.
-        if (stuckcounter > 100) {
-            maskPhaseInterrupts();
-            zero_crosses = 0;
-            return;
-        }
-    }
-        for (int i = 0; i < filter_level; i++) {
+//   if (average_interval > 125) {
+//        if ((INTERVAL_TIMER_COUNT < 125) && (duty_cycle < 600) && (zero_crosses < 500)) { // should be impossible, desync?exit anyway
+//           return;
+//        }
+//        stuckcounter++; // stuck at 100 interrupts before the main loop happens
+//                        // again.
+//        if (stuckcounter > 100) {
+//            maskPhaseInterrupts();
+//            zero_crosses = 0;
+//            return;
+//        }
+//    }
+
+	//TODO remove this
+//	filter_level = 6;
+
+	for (int i = 0; i < filter_level; i++) {
 #ifdef MCU_F031
-            if (((current_GPIO_PORT->IDR & current_GPIO_PIN) == !(rising))) {
+		if (((current_GPIO_PORT->IDR & current_GPIO_PIN) == !(rising))) {
 #else
-            if (getCompOutputLevel() == rising) {
+		if (getCompOutputLevel() == rising) {
 #endif
-                return;
-            }
-        }
+			return;
+		}
+ 	}
     //TODO Remove this
-    GPIO3->PTOR = (1 << 28); //ENC_I
+//    GPIO3->PTOR = (1 << 28); //ENC_I
 
     __disable_irq();
     maskPhaseInterrupts();
@@ -1673,33 +1707,33 @@ int main(void)
 
     loadEEpromSettings();
 
-    eepromBuffer.eeprom_version = 2;
-    eepromBuffer.version.major = 1;
-    eepromBuffer.version.minor = 23;
-    eepromBuffer.comp_pwm = 1;
-    eepromBuffer.variable_pwm = 1;
-
-    eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
-    eepromBuffer.advance_level = 2;//2;
-//    eepromBuffer.auto_advance = 1;
-    eepromBuffer.pwm_frequency = 24;//24;
-    eepromBuffer.startup_power = 100;
-    eepromBuffer.motor_kv = 255;//55;
-    eepromBuffer.motor_poles = 14;//14;
-    eepromBuffer.beep_volume = 5;
-    eepromBuffer.servo.low_threshold = 128;
-    eepromBuffer.servo.high_threshold = 128;
-    eepromBuffer.servo.neutral = 128;
-    eepromBuffer.servo.dead_band = 50;
-    eepromBuffer.low_cell_volt_cutoff = 50;
-    eepromBuffer.sine_mode_changeover_thottle_level = 15;
-    eepromBuffer.drag_brake_strength = 10;
-    eepromBuffer.driving_brake_strength = 10;
-    eepromBuffer.limits.temperature = 141;
-    eepromBuffer.limits.current = 102;
-    eepromBuffer.sine_mode_power = 6;
-
-    eepromBuffer.telementry_on_interval = 1;
+//    eepromBuffer.eeprom_version = 2;
+//    eepromBuffer.version.major = 1;
+//    eepromBuffer.version.minor = 23;
+//    eepromBuffer.comp_pwm = 1;
+//    eepromBuffer.variable_pwm = 1;
+//
+//    eepromBuffer.stuck_rotor_protection = 0;//1;	//Causes input = 0; when this is 1
+//    eepromBuffer.advance_level = 2;//2;
+////    eepromBuffer.auto_advance = 1;
+//    eepromBuffer.pwm_frequency = 24;//24;
+//    eepromBuffer.startup_power = 100;
+//    eepromBuffer.motor_kv = 255;//55;
+//    eepromBuffer.motor_poles = 14;//14;
+//    eepromBuffer.beep_volume = 5;
+//    eepromBuffer.servo.low_threshold = 128;
+//    eepromBuffer.servo.high_threshold = 128;
+//    eepromBuffer.servo.neutral = 128;
+//    eepromBuffer.servo.dead_band = 50;
+//    eepromBuffer.low_cell_volt_cutoff = 50;
+//    eepromBuffer.sine_mode_changeover_thottle_level = 15;
+//    eepromBuffer.drag_brake_strength = 10;
+//    eepromBuffer.driving_brake_strength = 10;
+//    eepromBuffer.limits.temperature = 141;
+//    eepromBuffer.limits.current = 102;
+//    eepromBuffer.sine_mode_power = 6;
+//
+//    eepromBuffer.telementry_on_interval = 1;
 
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || eeprom_layout_version > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;
@@ -1999,8 +2033,10 @@ if(zero_crosses < 5){
 //            makeTelemPackage(degrees_celsius, battery_voltage, actual_current,
 //                (uint16_t)consumed_current, e_rpm);
         	//Used for real-time debugging variables
-        	makeTelemPackage(0, (uint16_t)commutation_interval, waitTime,
-        	                (uint16_t)k_erpm, 0);
+
+        	//TODO remove this telemetry send
+        	makeTelemPackage(0, (uint16_t)commutation_interval, (uint16_t)average_interval,
+        	                (uint16_t)filter_level, 0);
 
             send_telem_DMA();
             send_telemetry = 0;
@@ -2108,12 +2144,32 @@ if(zero_crosses < 5){
                 filter_level = 8;
 #else
                 filter_level = 12;
+
+                //TODO remove this
+//                int filt_cnt = 5;
+//                int filt_sample_per = 4;
+//
+//                modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+//                modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+//
+//                modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
+//                modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
 #endif
             } else {
 #ifdef MCU_G071
                 TIM1->CCR5 = 10;
 #endif
                 filter_level = map(average_interval, 100, 500, 3, 12);
+//                filter_level = 1;
+
+//                int filt_cnt = map(average_interval, 100, 500, 5, 5);
+//                int filt_sample_per = map(average_interval, 100, 500, 0, 4);
+//
+//                modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+//                modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_CNT_MASK, LPCMP_CCR1_FILT_CNT(filt_cnt));
+//
+//                modifyReg32(&CMP0->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
+//                modifyReg32(&CMP1->CCR1, LPCMP_CCR1_FILT_PER_MASK, LPCMP_CCR1_FILT_PER(filt_sample_per));
             }
             if (commutation_interval < 50) {
                 filter_level = 2;
