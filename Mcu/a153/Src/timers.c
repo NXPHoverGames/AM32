@@ -182,7 +182,7 @@ void initIntervalTimer(void)
 }
 
 /*
- * @brief	Initializes the Systick timer to use for the delay functions
+ * @brief	Initializes the 24-bit Systick timer to use for the delay functions
  * 			1 systick clock tick = 1us
  * 			Systick counts down
  */
@@ -204,7 +204,8 @@ void initSystickTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set Systick clock to clock selected in MRCC_SYSTICK_CLKSEL
-	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, (1 << SysTick_CTRL_CLKSOURCE_Pos));
+//	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, (1 << SysTick_CTRL_CLKSOURCE_Pos));
+	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, 0);
 
 	//Set Systick reload value to max
 	SysTick->LOAD = 0xffffff;

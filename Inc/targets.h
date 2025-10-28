@@ -4911,7 +4911,7 @@
 #ifdef MCU_A153
 //#define STMICRO
 #define NXP
-#define CPU_FREQUENCY_MHZ   96		//Is the CPU/System/Ctimer0 clock
+#define CPU_FREQUENCY_MHZ   96		//Is the main_clk //Is the CPU/System/Ctimer0 clock
 #ifndef EEPROM_START_ADD
 #define EEPROM_START_ADD  (uint32_t)0x0800F800
 #endif

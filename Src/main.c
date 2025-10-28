@@ -406,7 +406,7 @@ void loadEEpromSettings()
     eepromBuffer.limits.temperature = 141;
     eepromBuffer.limits.current = 102;
     eepromBuffer.sine_mode_power = 6;
-    eepromBuffer.telemetry_on_interval = 0;
+    eepromBuffer.telemetry_on_interval = 1;
     eepromBuffer.input_type = 2;
 #endif
 

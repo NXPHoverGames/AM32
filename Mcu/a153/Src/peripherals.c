@@ -49,8 +49,8 @@ void initAfterJump()
 }
 
 /*
- * @brief 	Configures the core voltage to 1.1V. Sets the Fast Internal Reference Clock (FIRC) to 96MHz.
- * 			Sets MUX to select FIRC as MAIN_CLK. Sets system clock divider to /1, so CPU_CLK and SYSTEM_CLK are 96MHz.
+ * @brief 	Configures the core voltage to 1.1V. Sets the Fast Internal Reference Clock (FIRC) to 192MHz.
+ * 			Sets MUX to select FIRC as MAIN_CLK. Sets system clock divider to /2, so CPU_CLK and SYSTEM_CLK are 96MHz.
  */
 void SystemClock_Config(void)
 {
@@ -73,8 +73,8 @@ void SystemClock_Config(void)
 	//64MHz = 0
 	//96MHz = 1
 	//192MHz = 2
+	//Set to 192MHz
 	modifyReg32(&FMU0->FCTRL, FMU_FCTRL_RWSC_MASK, FMU_FCTRL_RWSC(2));
-//	modifyReg32(&FMU0->FCTRL, FMU_FCTRL_RWSC_MASK, FMU_FCTRL_RWSC(1));
 
 	//Set SRAM to support higher voltage levels
 	modifyReg32(&SPC0->SRAMCTL, SPC_SRAMCTL_VSM_MASK, SPC_SRAMCTL_VSM(2));

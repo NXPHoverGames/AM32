@@ -73,12 +73,30 @@ static inline uint16_t get_timer_us16(void) {
  */
 void delayMicros(uint32_t micros)
 {
-    const uint16_t cval_start = get_timer_us16();
 #ifdef NXP
+    const uint32_t cval_start = SysTick->VAL;
     //Systick timer counts down so mirror subtraction
-    while ((uint16_t)(cval_start - get_timer_us16()) < (uint16_t)micros) {
-    }
+//    while ((int32_t)(cval_start - get_timer_us16()) < (int32_t) micros) {
+//    }
+
+    while (micros > 0) {
+            uint32_t current = SysTick->VAL;
+            uint32_t elapsed;
+
+            if (cval_start >= current) {
+                elapsed = cval_start - current;
+            } else {
+                // Handle wrap-around
+                elapsed = cval_start + (SysTick->LOAD - current);
+            }
+
+            if (elapsed >= micros) {
+                break;
+            }
+        }
+
 #else
+    const uint16_t cval_start = get_timer_us16();
     while ((uint16_t)(get_timer_us16() - cval_start) < (uint16_t)micros) {
     }
 #endif
