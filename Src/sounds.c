@@ -226,7 +226,7 @@ void playInputTune()
     SET_PRESCALER_PWM(80);
     setCaptureCompare();
     comStep(3);
-//    comStep(1);
+//    comStep(1);	//TODO remove this
     delayMillis(100);
     SET_PRESCALER_PWM(70);
     delayMillis(100);
