@@ -37,8 +37,9 @@ void setVolume(uint8_t volume)
 
 void setCaptureCompare()
 {
-    SET_DUTY_CYCLE_ALL(beep_volume); // volume of the beep, (duty cycle) don't go
+//    SET_DUTY_CYCLE_ALL(beep_volume); // volume of the beep, (duty cycle) don't go
                                      // above 25 out of 2000
+	SET_DUTY_CYCLE_ALL(500);
 }
 
 void playBJNote(uint16_t freq, uint16_t bduration)
@@ -102,27 +103,28 @@ void playStartupTune()
 //        playBlueJayTune();
 //    } else {
         SET_AUTO_RELOAD_PWM(TIM1_AUTORELOAD);
+        delayMillis(1);
         setCaptureCompare();
+//        delayMillis(1);
 
 #ifdef NXP
         comStep(1);
         SET_PRESCALER_PWM(55);
-        delayMillis(200);
+        delayMillis(300); //(200);
 
 //        comStep(5);
         SET_PRESCALER_PWM(40);
-        delayMillis(200);
+        delayMillis(300); //(200);
 
 //        comStep(6);
         SET_PRESCALER_PWM(25);
-        delayMillis(200);
+        delayMillis(300); //(200);
 
 //        comStep(4);
         SET_PRESCALER_PWM(10);
         GPIO3->PTOR = (1 << 27); 	//ENC_A
-//        delayMillis(500);
-        delayMillis(200);
-        GPIO3->PTOR = (1 << 27);	//ENC_A
+        delayMillis(300); //(200);
+        GPIO3->PTOR = (1 << 27); 	//ENC_A
 
 #else
         comStep(3); // activate a pwm channel
@@ -225,13 +227,17 @@ void playInputTune()
     RELOAD_WATCHDOG_COUNTER();
     SET_PRESCALER_PWM(80);
     setCaptureCompare();
+
     comStep(3);
 //    comStep(1);	//TODO remove this
-    delayMillis(100);
+    delayMillis(300); //(100);
+
     SET_PRESCALER_PWM(70);
-    delayMillis(100);
+    delayMillis(300); //(100);
+
     SET_PRESCALER_PWM(40);
-    delayMillis(100);
+    delayMillis(300); //(100);
+
     allOff();
     SET_PRESCALER_PWM(0);
     signaltimeout = 0;
