@@ -83,7 +83,7 @@ void phaseBPWM()
 
 	//Force update the PWM submodule 1
 //	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(1));
-    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 /*
@@ -174,7 +174,7 @@ void phaseCPWM()
 
 	//Force update the PWM submodule 2
 //	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(1));
-    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 /*
@@ -251,7 +251,7 @@ void phaseAPWM()
     modifyReg32(&PHASE_A_PORT_HIGH->PCR[PHASE_A_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
 
 	//Force update the PWM submodule 0
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 /*
@@ -467,6 +467,8 @@ void comStep(char newStep)
         phaseAPWM();
         break;
     }
+
+//    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 void fullBrake()
