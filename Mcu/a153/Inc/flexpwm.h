@@ -10,14 +10,11 @@
 
 #include "main.h"
 
-#define force 0
-#define cldok 0
-
 /*
  * @brief 	ternary operator result if prescaler is zero
  */
 #define SET_PRESCALER_PWM_ZERO { \
-	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK(cldok)); /*Clear LDOK to prevent it already being set*/ \
+	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK_MASK); /*Clear LDOK to prevent it already being set*/ \
 	modifyReg16(&FLEXPWM0->SM[0].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(0)); /*Sets the prescaler to 1*/ \
 	modifyReg16(&FLEXPWM0->SM[1].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(0)); \
 	modifyReg16(&FLEXPWM0->SM[2].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(0)); \
@@ -25,14 +22,13 @@
 	FLEXPWM0->SM[1].VAL1 = TIM1_AUTORELOAD; \
 	FLEXPWM0->SM[2].VAL1 = TIM1_AUTORELOAD; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK);	/*Load prescaler, modulus and PWM values of all submodules*/ \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0));	\
 }
 
 /*
  * @brief 	ternary operator result if prescaler is non zero
  */
 #define SET_PRESCALER_PWM_NON_ZERO(presc) { \
-	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK(cldok)); /*Clear LDOK to prevent it already being set*/ \
+	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK_MASK); /*Clear LDOK to prevent it already being set*/ \
 	modifyReg16(&FLEXPWM0->SM[0].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); /*Sets the prescaler to 128*/ \
 	modifyReg16(&FLEXPWM0->SM[1].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); \
 	modifyReg16(&FLEXPWM0->SM[2].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); \
@@ -40,14 +36,7 @@
 	FLEXPWM0->SM[1].VAL1 = (presc * 63); \
 	FLEXPWM0->SM[2].VAL1 = (presc * 63); \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK);	/*Load prescaler, modulus and PWM values of all submodules*/ \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
-
-//#define SET_PRESCALER_PWM_NON_ZERO(presc) {
-//	SET_ACTUAL_PRESCALER_PWM(7); /*Sets the prescaler to 128*/
-//	uint32_t reload_val = 2000;
-//	SET_AUTO_RELOAD_PWM(reload_val); /*Set reload value*/
-//}
 
 /*
  * @brief 	Used for making the sounds. Sets the PWM prescaler to 128 and adjusts the reload value VAL1 to generate the correct sound frequency.
@@ -59,36 +48,33 @@
  * @brief 	This actually sets the prescaler of the PWM module
  */
 #define SET_ACTUAL_PRESCALER_PWM(presc) { \
-	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK(cldok)); /*Clear LDOK to prevent it already being set*/ \
+	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK_MASK); /*Clear LDOK to prevent it already being set*/ \
 	modifyReg16(&FLEXPWM0->SM[0].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(presc)); \
 	modifyReg16(&FLEXPWM0->SM[1].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(presc)); \
 	modifyReg16(&FLEXPWM0->SM[2].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(presc)); \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 /*
  * @brief 	Sets the reload value of the PWM submodules
  */
 #define SET_AUTO_RELOAD_PWM(relval) { \
-	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK(cldok)); /*Clear LDOK to prevent it already being set*/ \
+	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK_MASK); /*Clear LDOK to prevent it already being set*/ \
 	FLEXPWM0->SM[0].VAL1 = relval; \
 	FLEXPWM0->SM[1].VAL1 = relval; \
 	FLEXPWM0->SM[2].VAL1 = relval; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 /*
  * @brief 	Sets the duty cycle of all PWM signals
  */
 #define SET_DUTY_CYCLE_ALL(newdc) { \
-	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK(cldok)); /*Clear LDOK to prevent it already being set*/ \
+	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_CLDOK_MASK); /*Clear LDOK to prevent it already being set*/ \
 	FLEXPWM0->SM[0].VAL3 = newdc; \
 	FLEXPWM0->SM[1].VAL3 = newdc; \
 	FLEXPWM0->SM[2].VAL3 = newdc; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 void initFlexPWM(void);

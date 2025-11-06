@@ -37,9 +37,8 @@ void setVolume(uint8_t volume)
 
 void setCaptureCompare()
 {
-//    SET_DUTY_CYCLE_ALL(beep_volume); // volume of the beep, (duty cycle) don't go
+    SET_DUTY_CYCLE_ALL(beep_volume); // volume of the beep, (duty cycle) don't go
                                      // above 25 out of 2000
-	SET_DUTY_CYCLE_ALL(500);
 }
 
 void playBJNote(uint16_t freq, uint16_t bduration)
@@ -229,7 +228,6 @@ void playInputTune()
     setCaptureCompare();
 
     comStep(3);
-//    comStep(1);	//TODO remove this
     delayMillis(300); //(100);
 
     SET_PRESCALER_PWM(70);

@@ -85,10 +85,10 @@ void initFlexPWM(void)
 			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(1) |
 			PWM_DTSRCSEL_SM0SEL45(2) | PWM_DTSRCSEL_SM1SEL45(2) | PWM_DTSRCSEL_SM2SEL45(2));
 
-	//Set SWCOUT45 and SWCOU23 to LOW
+	//Set SWCOUT45 to LOW and SWCOUT23 to HIGH
 	modifyReg16(&FLEXPWM0->SWCOUT,
-			PWM_SWCOUT_SM0OUT45_MASK | PWM_SWCOUT_SM1OUT45_MASK | PWM_SWCOUT_SM2OUT45_MASK |
-			PWM_SWCOUT_SM0OUT23_MASK | PWM_SWCOUT_SM1OUT23_MASK | PWM_SWCOUT_SM2OUT23_MASK, 0);
+			PWM_SWCOUT_SM0OUT45_MASK | PWM_SWCOUT_SM1OUT45_MASK | PWM_SWCOUT_SM2OUT45_MASK,
+			PWM_SWCOUT_SM0OUT23_MASK | PWM_SWCOUT_SM1OUT23_MASK | PWM_SWCOUT_SM2OUT23_MASK);
 
 	//Set that the force signal from submodule 0 also forces updates to the other submodules.
 	//Note that submodule 0 should have a 0 in FORCE_SEL for this to work
@@ -173,6 +173,12 @@ void initFlexPWM(void)
 
     //Enable reload interrupt for submodule 0
 //    modifyReg16(&FLEXPWM0->SM[0].INTEN, PWM_INTEN_RIE_MASK, PWM_INTEN_RIE(1));
+
+    //Mask all phases by default
+    modifyReg16(&FLEXPWM0->MASK, 0x777, 0x770);
+
+    //Force out event to load all buffered registers
+    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 
 	//Enable all six PWM outputs
 	FLEXPWM0->OUTEN = PWM_OUTEN_PWMA_EN_MASK | PWM_OUTEN_PWMB_EN_MASK;
