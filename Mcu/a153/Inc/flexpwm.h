@@ -32,11 +32,13 @@
 	modifyReg16(&FLEXPWM0->SM[0].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); /*Sets the prescaler to 128*/ \
 	modifyReg16(&FLEXPWM0->SM[1].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); \
 	modifyReg16(&FLEXPWM0->SM[2].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(7)); \
-	FLEXPWM0->SM[0].VAL1 = (((192000000 / 128) / 63 ) / presc); /*Set reload value using main_clk, actual prescaler value, sounds ratio and prescaler argument*/ \
-	FLEXPWM0->SM[1].VAL1 = (((192000000 / 128) / 63 ) / presc); \
-	FLEXPWM0->SM[2].VAL1 = (((192000000 / 128) / 63 ) / presc); \
+	FLEXPWM0->SM[0].VAL1 = (63 * presc); /*Set reload value using main_clk, actual prescaler value, sounds ratio and prescaler argument*/ \
+	FLEXPWM0->SM[1].VAL1 = (63 * presc); \
+	FLEXPWM0->SM[2].VAL1 = (63 * presc); \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK);	/*Load prescaler, modulus and PWM values of all submodules*/ \
 }
+
+	//(((192000000 / 128) / 63 ) / presc)
 
 //#define SET_PRESCALER_PWM_NON_ZERO(presc) {
 //	SET_ACTUAL_PRESCALER_PWM(7); /*Sets the prescaler to 128*/

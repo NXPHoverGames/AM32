@@ -45,7 +45,7 @@ void initFlexPWM(void)
 		//Set complementary channel operation and that a force out event initializes the counter
 		modifyReg16(&FLEXPWM0->SM[submodule].CTRL2,
 				PWM_CTRL2_INDEP_MASK | PWM_CTRL2_FRCEN_MASK,
-				PWM_CTRL2_INDEP(0) | PWM_CTRL2_FRCEN(1));
+				PWM_CTRL2_INDEP(0) | PWM_CTRL2_FRCEN(0));
 
 		//Set PWM timing. PWM is complementary so PWMB is the reverse of PWMA ignoring the dead-time
 		FLEXPWM0->SM[submodule].INIT = 0;					//set initial value
@@ -61,18 +61,23 @@ void initFlexPWM(void)
 		//All PWM outputs will go into fault when either of the fault inputs assert.
 		modifyReg16(&FLEXPWM0->SM[submodule].DISMAP[0],
 				PWM_DISMAP_DIS0X_MASK | PWM_DISMAP_DIS0B_MASK | PWM_DISMAP_DIS0A_MASK,
-				PWM_DISMAP_DIS0A(0x7) | PWM_DISMAP_DIS0B(0x7));
+				PWM_DISMAP_DIS0A(0x0) | PWM_DISMAP_DIS0B(0x0));
 
 		//Invert PWMA and PWMB outputs to comprehend for correct PWM timing. Non-invert if PWM_A controls HIGH FET and PWM_B controls LOW FET.
 		//PWM_A controls the LOW FET
 		//PWM_B controls the HIGH FET
-		modifyReg16(&FLEXPWM0->SM[submodule].OCTRL,
-				PWM_OCTRL_POLA_MASK | PWM_OCTRL_POLB_MASK,
-				PWM_OCTRL_POLA(1) | PWM_OCTRL_POLB(1));
+//		modifyReg16(&FLEXPWM0->SM[submodule].OCTRL,
+//				PWM_OCTRL_POLA_MASK | PWM_OCTRL_POLB_MASK,
+//				PWM_OCTRL_POLA(1) | PWM_OCTRL_POLB(1));
 	}
 
 	//Set that PWM23 (VAL2 and VAL3) is used for complementary PWM generation
 	modifyReg16(&FLEXPWM0->MCTRL, PWM_MCTRL_IPOL_MASK, 0);
+
+	//Set that inverted PWM23 is passed to dead-time logic for all submodules
+	modifyReg16(&FLEXPWM0->DTSRCSEL, 0xfff,
+			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(1) |
+			PWM_DTSRCSEL_SM0SEL45(2) | PWM_DTSRCSEL_SM1SEL45(2) | PWM_DTSRCSEL_SM2SEL45(2));
 
 	//Set that the force signal from submodule 0 also forces updates to the other submodules.
 	//Note that submodule 0 should have a 0 in FORCE_SEL for this to work
@@ -148,6 +153,9 @@ void initFlexPWM(void)
 //	modifyReg16(&FLEXPWM0->SM[2].DISMAP[0], PWM_DISMAP_DIS0X_MASK | PWM_DISMAP_DIS0B_MASK | PWM_DISMAP_DIS0A_MASK,
 //			PWM_DISMAP_DIS0A(0x0) | PWM_DISMAP_DIS0B(0x0));
 
+	//Force update all modules so the buffered registers take effect
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+
 	//Enable all six PWM outputs
 	FLEXPWM0->OUTEN = PWM_OUTEN_PWMA_EN_MASK | PWM_OUTEN_PWMB_EN_MASK;
 
@@ -170,9 +178,6 @@ void initFlexPWM(void)
 		//Set PWM to independent mode
 //		modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
 //		modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
-
-		//Force update the PWM submodule 1
-//		modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 void enableFlexPWM(void)
