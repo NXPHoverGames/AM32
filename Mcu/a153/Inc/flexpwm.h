@@ -10,8 +10,8 @@
 
 #include "main.h"
 
-#define force 1
-#define cldok 1
+#define force 0
+#define cldok 0
 
 /*
  * @brief 	ternary operator result if prescaler is zero
@@ -25,9 +25,7 @@
 	FLEXPWM0->SM[1].VAL1 = TIM1_AUTORELOAD; \
 	FLEXPWM0->SM[2].VAL1 = TIM1_AUTORELOAD; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK);	/*Load prescaler, modulus and PWM values of all submodules*/ \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0));	\
 }
 
 /*
@@ -42,9 +40,7 @@
 	FLEXPWM0->SM[1].VAL1 = (presc * 63); \
 	FLEXPWM0->SM[2].VAL1 = (presc * 63); \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK);	/*Load prescaler, modulus and PWM values of all submodules*/ \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 //#define SET_PRESCALER_PWM_NON_ZERO(presc) {
@@ -68,9 +64,7 @@
 	modifyReg16(&FLEXPWM0->SM[1].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(presc)); \
 	modifyReg16(&FLEXPWM0->SM[2].CTRL, PWM_CTRL_PRSC_MASK, PWM_CTRL_PRSC(presc)); \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 /*
@@ -82,9 +76,7 @@
 	FLEXPWM0->SM[1].VAL1 = relval; \
 	FLEXPWM0->SM[2].VAL1 = relval; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 /*
@@ -96,9 +88,7 @@
 	FLEXPWM0->SM[1].VAL3 = newdc; \
 	FLEXPWM0->SM[2].VAL3 = newdc; \
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_LDOK_MASK); \
-	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
-	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(force)); \
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(0)); \
 }
 
 void initFlexPWM(void);

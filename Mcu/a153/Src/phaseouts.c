@@ -30,6 +30,8 @@ extern char prop_brake_active;
 #define HIGH_BITREG_OFF BRR
 #endif
 
+#define INVERT_LOGIC
+
 /*
  * @brief 	Sets high FET output pins to LOW and enables PWM on the low FET output pins.
  * 			This causes the motor to brake and the brake strength is then controlled by the duty cycle.
@@ -37,24 +39,49 @@ extern char prop_brake_active;
 void proportionalBrake()
 {
 	//Set high FET pins to GPIO
-	modifyReg32(&PHASE_A_PORT_HIGH->PCR[PHASE_A_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
-	modifyReg32(&PHASE_B_PORT_HIGH->PCR[PHASE_B_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
-	modifyReg32(&PHASE_C_PORT_HIGH->PCR[PHASE_C_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
+//	modifyReg32(&PHASE_A_PORT_HIGH->PCR[PHASE_A_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
+//	modifyReg32(&PHASE_B_PORT_HIGH->PCR[PHASE_B_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
+//	modifyReg32(&PHASE_C_PORT_HIGH->PCR[PHASE_C_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(0));
+//
+//	//Set high FET pins as output
+//	modifyReg32(&PHASE_A_GPIO_HIGH->PDDR, 0, (1 << PHASE_A_PIN_HIGH));
+//	modifyReg32(&PHASE_B_GPIO_HIGH->PDDR, 0, (1 << PHASE_B_PIN_HIGH));
+//	modifyReg32(&PHASE_C_GPIO_HIGH->PDDR, 0, (1 << PHASE_C_PIN_HIGH));
+//
+//	//Set high FET output pins to LOW
+//	PHASE_A_GPIO_HIGH->PCOR = (1 << PHASE_A_PIN_HIGH);
+//	PHASE_B_GPIO_HIGH->PCOR = (1 << PHASE_B_PIN_HIGH);
+//	PHASE_C_GPIO_HIGH->PCOR = (1 << PHASE_C_PIN_HIGH);
+//
+//	//Set low FET output pins to PWM, duty cycle will now control braking
+//	modifyReg32(&PHASE_A_PORT_LOW->PCR[PHASE_A_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
+//	modifyReg32(&PHASE_B_PORT_LOW->PCR[PHASE_B_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
+//	modifyReg32(&PHASE_C_PORT_LOW->PCR[PHASE_C_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
 
-	//Set high FET pins as output
-	modifyReg32(&PHASE_A_GPIO_HIGH->PDDR, 0, (1 << PHASE_A_PIN_HIGH));
-	modifyReg32(&PHASE_B_GPIO_HIGH->PDDR, 0, (1 << PHASE_B_PIN_HIGH));
-	modifyReg32(&PHASE_C_GPIO_HIGH->PDDR, 0, (1 << PHASE_C_PIN_HIGH));
+	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+	modifyReg16(&FLEXPWM0->DTSRCSEL, 0xfff,
+			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(0));
+#else
+	modifyReg16(&FLEXPWM0->DTSRCSEL, 0xfff,
+			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(1));
+#endif
 
-	//Set high FET output pins to LOW
-	PHASE_A_GPIO_HIGH->PCOR = (1 << PHASE_A_PIN_HIGH);
-	PHASE_B_GPIO_HIGH->PCOR = (1 << PHASE_B_PIN_HIGH);
-	PHASE_C_GPIO_HIGH->PCOR = (1 << PHASE_C_PIN_HIGH);
+	//Mask high FETs so its LOW, PWM_B are the high FETS
+	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x070);
 
-	//Set low FET output pins to PWM, duty cycle will now control braking
-	modifyReg32(&PHASE_A_PORT_LOW->PCR[PHASE_A_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
-	modifyReg32(&PHASE_B_PORT_LOW->PCR[PHASE_B_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
-	modifyReg32(&PHASE_C_PORT_LOW->PCR[PHASE_C_PIN_LOW], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
+	//Set SWCOUT45 to LOW
+//	modifyReg16(&FLEXPWM0->SWCOUT, PWM_SWCOUT_SM0OUT45_MASK | PWM_SWCOUT_SM1OUT45_MASK | PWM_SWCOUT_SM2OUT45_MASK, 0);
+//
+//	//Set all phases to independent mode
+//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_INDEP(1));
+
+	//Force out event
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 /*
@@ -423,77 +450,228 @@ void phaseALOW()
 
 void allOff()
 {
-    phaseAFLOAT();
-    phaseBFLOAT();
-    phaseCFLOAT();
+//    phaseAFLOAT();
+//    phaseBFLOAT();
+//    phaseCFLOAT();
+
+	//Mask all phases
+	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x770);
+
+	//Set source using DTSRCSEL
+//	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+//			PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(2));
+//
+//	//Set all phases to independent mode
+//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+
+	//Force out event
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 void comStep(char newStep)
 {
     switch (newStep) {
     case 1: // A-B
-        phaseCFLOAT();
-        phaseBLOW();
-        phaseAPWM();
+    	//A PWM, B LOW, C FLOAT
+//        phaseCFLOAT();
+//        phaseBLOW();
+//        phaseAPWM();
+
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(2));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(2));
+#endif
+
+    	//Mask phase C to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
         break;
 
     case 2: // C-B
-        phaseAFLOAT();
-        phaseBLOW();
-        phaseCPWM();
+    	//A FLOAT, B LOW, C PWM
+//        phaseAFLOAT();
+//        phaseBLOW();
+//        phaseCPWM();
+
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(0));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(1));
+#endif
+
+    	//Mask phase to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
         break;
 
     case 3: // C-A
-        phaseBFLOAT();
-        phaseALOW();
-        phaseCPWM();
+    	//A LOW, B FLOAT, C PWM
+//        phaseBFLOAT();
+//        phaseALOW();
+//        phaseCPWM();
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(0));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(1));
+#endif
+
+    	//Mask phase to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
         break;
 
     case 4: // B-A
-        phaseCFLOAT();
-        phaseALOW();
-        phaseBPWM();
+    	//A LOW, B PWM, C FLOAT
+//        phaseCFLOAT();
+//        phaseALOW();
+//        phaseBPWM();
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(2));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(2));
+#endif
+
+    	//Mask phase to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
         break;
 
     case 5: // B-C
-        phaseAFLOAT();
-        phaseCLOW();
-        phaseBPWM();
+    	//A FLOAT, B PWM, C LOW
+//        phaseAFLOAT();
+//        phaseCLOW();
+//        phaseBPWM();
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(1));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(0));
+#endif
+
+    	//Mask phase to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
         break;
 
     case 6: // A-C
-        phaseBFLOAT();
-        phaseCLOW();
-        phaseAPWM();
+    	//A PWM, B FLOAT, C LOW
+//        phaseBFLOAT();
+//        phaseCLOW();
+//        phaseAPWM();
+    	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    	    	PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(1));
+#else
+    	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+    			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(0));
+#endif
+
+    	//Mask phase to float
+    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+
+    	//Set phase that needs to float to independent mode
+//    	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
+//    	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//    	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(0));
         break;
     }
+
+    //Force out event
+    modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//    modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//    modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(1));
+
+    //TODO remove this
+    GPIO3->PTOR = (1 << 27); 	//ENC_A
 }
 
 void fullBrake()
 { // full braking shorting all low sides
-    phaseALOW();
-    phaseBLOW();
-    phaseCLOW();
+//    phaseALOW();
+//    phaseBLOW();
+//    phaseCLOW();
+
+	//Set source using DTSRCSEL
+#ifdef INVERT_LOGIC
+	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(0));
+#else
+	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
+			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(1));
+#endif
+
+	//Mask high FETs so its LOW, PWM_B are the high FETS
+	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x070);
+
+	//Set all phases to independent mode
+//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INDEP_MASK, PWM_CTRL2_INDEP(1));
+
+	//Force out event
+	modifyReg16(&FLEXPWM0->SM[0].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, 0, PWM_CTRL2_FORCE(1));
+//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, 0, PWM_CTRL2_FORCE(1));
 }
 
 //TODO the following are never called
 void allpwm()
 { // for stepper_sine
-    phaseAPWM();
-    phaseBPWM();
-    phaseCPWM();
+//    phaseAPWM();
+//    phaseBPWM();
+//    phaseCPWM();
 }
 
 void twoChannelForward()
 {
-    phaseAPWM();
-    phaseBLOW();
-    phaseCPWM();
+//    phaseAPWM();
+//    phaseBLOW();
+//    phaseCPWM();
 }
 
 void twoChannelReverse()
 {
-    phaseALOW();
-    phaseBPWM();
-    phaseCLOW();
+//    phaseALOW();
+//    phaseBPWM();
+//    phaseCLOW();
 }
