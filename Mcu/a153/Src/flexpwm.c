@@ -40,15 +40,14 @@ void initFlexPWM(void)
 		//Set prescaler to 1 and that buffered registers are set at the next PWM reload if MCTRL[LDOK] is set
 		modifyReg16(&FLEXPWM0->SM[submodule].CTRL,
 				PWM_CTRL_PRSC_MASK | PWM_CTRL_LDMOD_MASK,
-				PWM_CTRL_PRSC(0) | PWM_CTRL_LDMOD(0) | PWM_CTRL_COMPMODE(0));	//TODO set LDMOD and COMPMODE to 0
+				PWM_CTRL_PRSC(0) | PWM_CTRL_LDMOD(0));
 
-		//Set complementary channel operation and that a force out event initializes the counter
-		//FRCEN must be enabled. Otherwise the motor does not spin correctly
-		//Set PWM23 initial value at force out event to logic HIGH
+		//Enable complementary channel operation
+		//FRCEN must be disabled. Otherwise the motor does not spin correctly
+		//PWM23 initializes at logic 0
 		modifyReg16(&FLEXPWM0->SM[submodule].CTRL2,
 				PWM_CTRL2_INDEP_MASK | PWM_CTRL2_FRCEN_MASK | PWM_CTRL2_PWM23_INIT_MASK,
 				PWM_CTRL2_INDEP(0) | PWM_CTRL2_FRCEN(0) | PWM_CTRL2_PWM23_INIT(0) | PWM_CTRL2_DBGEN(0));
-		//TODO set FRCEN to 1
 
 		//Set PWM timing. PWM is complementary so PWMB is the reverse of PWMA ignoring the dead-time
 		FLEXPWM0->SM[submodule].INIT = 0;					//set initial value
@@ -68,13 +67,6 @@ void initFlexPWM(void)
 		modifyReg16(&FLEXPWM0->SM[submodule].DISMAP[0],
 				PWM_DISMAP_DIS0X_MASK | PWM_DISMAP_DIS0B_MASK | PWM_DISMAP_DIS0A_MASK,
 				PWM_DISMAP_DIS0A(0) | PWM_DISMAP_DIS0B(0));
-
-		//Invert PWMA and PWMB outputs to comprehend for correct PWM timing. Non-invert if PWM_A controls HIGH FET and PWM_B controls LOW FET.
-		//PWM_A controls the LOW FET
-		//PWM_B controls the HIGH FET
-//		modifyReg16(&FLEXPWM0->SM[submodule].OCTRL,
-//				PWM_OCTRL_POLA_MASK | PWM_OCTRL_POLB_MASK,
-//				PWM_OCTRL_POLA(1) | PWM_OCTRL_POLB(1));
 	}
 
 	//Set that PWM23 (VAL2 and VAL3) is used for complementary PWM generation
@@ -101,18 +93,6 @@ void initFlexPWM(void)
 	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_INIT_SEL_MASK, 0);
 	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_INIT_SEL_MASK, PWM_CTRL2_INIT_SEL(2));
 	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_INIT_SEL_MASK, PWM_CTRL2_INIT_SEL(2));
-
-	//Set that AUX_CLK from submodule 0 is used as clock source for submodule 1 and 2
-	//Note that submodule 0 must not use this setting
-//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_CLK_SEL_MASK, 0);
-//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_CLK_SEL_MASK, PWM_CTRL2_CLK_SEL(2));
-//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_CLK_SEL_MASK, PWM_CTRL2_CLK_SEL(2));
-
-	//Set that master reload from submodule 0 also reloads submodule 1 and 2 registers
-	//Note that submodule 0 must not use this setting
-//	modifyReg16(&FLEXPWM0->SM[0].CTRL2, PWM_CTRL2_RELOAD_SEL_MASK, 0);
-//	modifyReg16(&FLEXPWM0->SM[1].CTRL2, PWM_CTRL2_RELOAD_SEL_MASK, PWM_CTRL2_RELOAD_SEL(1));
-//	modifyReg16(&FLEXPWM0->SM[2].CTRL2, PWM_CTRL2_RELOAD_SEL_MASK, PWM_CTRL2_RELOAD_SEL(1));
 
 	//Setup fault protection to prevent FET shortage for the three phases
 	//Setup AOI event 0, 1, 2 to generate event when logic A&B==1 (PWM_A & PWM_B)
@@ -171,9 +151,6 @@ void initFlexPWM(void)
 	modifyReg32(&PHASE_B_PORT_HIGH->PCR[PHASE_B_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
     modifyReg32(&PHASE_C_PORT_HIGH->PCR[PHASE_C_PIN_HIGH], PORT_PCR_MUX_MASK, PORT_PCR_MUX(5));
 
-    //Enable reload interrupt for submodule 0
-//    modifyReg16(&FLEXPWM0->SM[0].INTEN, PWM_INTEN_RIE_MASK, PWM_INTEN_RIE(1));
-
     //Mask all phases by default
     modifyReg16(&FLEXPWM0->MASK, 0x777, 0x770);
 
@@ -191,18 +168,6 @@ void enableFlexPWM(void)
 
 	//Turn on clock source of all three submodules
 	modifyReg16(&FLEXPWM0->MCTRL, 0, PWM_MCTRL_RUN_MASK);
-
-	//Enable NVIC flexpwm interrupt
-//	__NVIC_EnableIRQ(FLEXPWM0_SUBMODULE0_IRQn);
-}
-
-void FLEXPWM0_SUBMODULE0_IRQHandler(void)
-{
-	//Clear reload flag
-	modifyReg16(&FLEXPWM0->SM[0].STS, 0, PWM_STS_RF_MASK);
-
-	//TODO remove this
-	GPIO3->PTOR = (1 << 27); 	//ENC_A
 }
 
 inline void setPWMCompare1(uint16_t compareone)
