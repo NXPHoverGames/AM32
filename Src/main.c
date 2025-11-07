@@ -408,6 +408,26 @@ void loadEEpromSettings()
     eepromBuffer.sine_mode_power = 6;
     eepromBuffer.telemetry_on_interval = 1;
     eepromBuffer.input_type = 2;
+
+    eepromBuffer.tune[0] = 0xff;	//Turn off BJ tune
+//    eepromBuffer.tune[0] = 4;
+//    eepromBuffer.tune[1] = 5;
+//    eepromBuffer.tune[2] = 108;
+//    eepromBuffer.tune[3] = 108;
+
+    eepromBuffer.tune[4] = 250;	//duration
+    eepromBuffer.tune[5] = 10;	//frequency
+    eepromBuffer.tune[6] = 250;
+    eepromBuffer.tune[7] = 10;
+    eepromBuffer.tune[8] = 250;
+    eepromBuffer.tune[9] = 50;
+    eepromBuffer.tune[10] = 250;
+    eepromBuffer.tune[11] = 50;
+    eepromBuffer.tune[12] = 250;
+    eepromBuffer.tune[13] = 100;
+    eepromBuffer.tune[14] = 250;
+    eepromBuffer.tune[15] = 100;
+
 #endif
 
     if(eepromBuffer.eeprom_version < EEPROM_VERSION){

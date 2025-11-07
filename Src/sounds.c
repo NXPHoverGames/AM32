@@ -43,6 +43,14 @@ void setCaptureCompare()
 
 void playBJNote(uint16_t freq, uint16_t bduration)
 { // hz and ms
+#ifdef NXP
+    uint32_t PWM_IPBUS_CLOCK_HZ = 192000000;
+
+    SET_ACTUAL_PRESCALER_PWM(7);								//Set prescaler to 128 (max)
+    SET_AUTO_RELOAD_PWM((PWM_IPBUS_CLOCK_HZ / 128) / freq);	//Set PWM reload time to corresponding frequency
+    SET_DUTY_CYCLE_ALL(beep_volume);							//Set beep volume (between 0 and 22, see setVolume())
+
+#else
     uint16_t timerOne_reload = TIM1_AUTORELOAD;
 
     SET_PRESCALER_PWM(10);
@@ -51,6 +59,7 @@ void playBJNote(uint16_t freq, uint16_t bduration)
     SET_AUTO_RELOAD_PWM(timerOne_reload);
     SET_DUTY_CYCLE_ALL(beep_volume * timerOne_reload / TIM1_AUTORELOAD); // volume of the beep, (duty cycle) don't
                                                                          // go above 25 out of 2000
+#endif
     delayMillis(bduration);
 }
 
@@ -98,34 +107,13 @@ void playStartupTune()
 {
     __disable_irq();
 
-//    if (eepromBuffer.tune[0] != ERASED_FLASH_BYTE) {
-//        playBlueJayTune();
-//    } else {
+    if (eepromBuffer.tune[0] != ERASED_FLASH_BYTE) {
+        playBlueJayTune();
+    } else {
         SET_AUTO_RELOAD_PWM(TIM1_AUTORELOAD);
         delayMillis(1);
         setCaptureCompare();
-//        delayMillis(1);
 
-#ifdef NXP
-        comStep(1);
-        SET_PRESCALER_PWM(55);
-        delayMillis(300); //(200);
-
-//        comStep(5);
-        SET_PRESCALER_PWM(40);
-        delayMillis(300); //(200);
-
-//        comStep(6);
-        SET_PRESCALER_PWM(25);
-        delayMillis(300); //(200);
-
-//        comStep(4);
-        SET_PRESCALER_PWM(10);
-        GPIO3->PTOR = (1 << 27); 	//ENC_A
-        delayMillis(300); //(200);
-        GPIO3->PTOR = (1 << 27); 	//ENC_A
-
-#else
         comStep(3); // activate a pwm channel
         SET_PRESCALER_PWM(55); // frequency of beep
         delayMillis(200); // duration of beep
@@ -137,12 +125,11 @@ void playStartupTune()
         comStep(6);
         SET_PRESCALER_PWM(25); // higher again..
         delayMillis(200);
-#endif
 
         allOff(); // turn all channels low again
         SET_PRESCALER_PWM(0); // set prescaler back to 0.
         signaltimeout = 0;
-//    }
+    }
 
     SET_AUTO_RELOAD_PWM(TIMER1_MAX_ARR);
     __enable_irq();
@@ -228,13 +215,13 @@ void playInputTune()
     setCaptureCompare();
 
     comStep(3);
-    delayMillis(300); //(100);
+    delayMillis(100);
 
     SET_PRESCALER_PWM(70);
-    delayMillis(300); //(100);
+    delayMillis(100);
 
     SET_PRESCALER_PWM(40);
-    delayMillis(300); //(100);
+    delayMillis(100);
 
     allOff();
     SET_PRESCALER_PWM(0);
