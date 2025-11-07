@@ -12,7 +12,7 @@
  * @brief 	Initializes the PWM for three output phases
  * 			Runs on the main_clk which can be configured to be 12MHz, 96MHz, 192MHz or 16kHz
  * 			Is configured to run at main_clk of 192MHz (see SystemClock_Config()) and reloads at 24kHz (defined by TIM1_AUTORELOAD value)
- * 			PWM_A controls the LOW FET. PWM_B control the HIGH FET.
+ * 			PWM_A controls the LOW FET. PWM_B control the HIGH FET. Define INVERT_PWM if the hardware is the other way around.
  */
 void initFlexPWM(void)
 {
@@ -59,6 +59,16 @@ void initFlexPWM(void)
 		//Disable fault protection as it is not necessary because independent mode is never configured
 		modifyReg16(&FLEXPWM0->SM[submodule].DISMAP[0],
 				PWM_DISMAP_DIS0X_MASK | PWM_DISMAP_DIS0B_MASK | PWM_DISMAP_DIS0A_MASK, 0);
+
+#ifdef USE_INVERTED_LOW
+		//Invert output polarity of PWM A (low FET)
+		modifyReg16(&FLEXPWM0->SM[submodule], PWM_OCTRL_POLA_MASK, PWM_OCTRL_POLA(1));
+#endif
+
+#ifdef USE_INVERTED_HIGH
+		//Invert output polarity of PWM B (high FET)
+		modifyReg16(&FLEXPWM0->SM[submodule], PWM_OCTRL_POLB_MASK, PWM_OCTRL_POLB(1));
+#endif
 	}
 
 	//Set that PWM23 (VAL2 and VAL3) is used for complementary PWM generation

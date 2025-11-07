@@ -9,34 +9,13 @@
 
 extern char prop_brake_active;
 
-//TODO put our PCOR and PSOR in to set our pins accordingly
-#ifdef USE_INVERTED_LOW
-#pragma message("using inverted low side output")
-#define LOW_BITREG_ON BRR
-#define LOW_BITREG_OFF BSRR
-#else
-#define LOW_BITREG_ON BSRR
-#define LOW_BITREG_OFF BRR
-#endif
-
-#ifdef USE_INVERTED_HIGH
-#pragma message("using inverted high side output")
-// #define HIGH_BITREG_ON  BRR
-#define HIGH_BITREG_OFF BSRR
-#else
-// #define HIGH_BITREG_ON  BSRR
-#define HIGH_BITREG_OFF BRR
-#endif
-
-//#define INVERT_PWM
-
 void comStep(char newStep)
 {
     switch (newStep) {
     case 1: // A-B
     	//A PWM, B LOW, C FLOAT
 
-    	//Set source using DTSRCSEL
+    	//Set source using DTSRCSEL. Invert PWM signal if necessary for hardware
 #ifdef INVERT_PWM
     	modifyReg16(&FLEXPWM0->DTSRCSEL, PWM_DTSRCSEL_SM0SEL23_MASK | PWM_DTSRCSEL_SM1SEL23_MASK | PWM_DTSRCSEL_SM2SEL23_MASK,
     	    	PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(0));
@@ -45,8 +24,13 @@ void comStep(char newStep)
     			PWM_DTSRCSEL_SM0SEL23(1) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(0));
 #endif
 
-    	//Mask phase C to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase C to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+    	} else {
+    		//Mask phase C to float and phase A low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x540);
+    	}
         break;
 
     case 2: // C-B
@@ -61,8 +45,13 @@ void comStep(char newStep)
     			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(2) | PWM_DTSRCSEL_SM2SEL23(1));
 #endif
 
-    	//Mask phase to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase A to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+    	} else {
+    		//Mask phase A to float and phase C low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x510);
+    	}
         break;
 
     case 3: // C-A
@@ -77,8 +66,13 @@ void comStep(char newStep)
     			PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(0) | PWM_DTSRCSEL_SM2SEL23(1));
 #endif
 
-    	//Mask phase to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase B to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+    	} else {
+    		//Mask phase B to float and phase C low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x620);
+    	}
         break;
 
     case 4: // B-A
@@ -93,8 +87,13 @@ void comStep(char newStep)
     			PWM_DTSRCSEL_SM0SEL23(2) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(0));
 #endif
 
-    	//Mask phase to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase C to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x440);
+    	} else {
+    		//Mask phase C to float and phase B low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x640);
+    	}
         break;
 
     case 5: // B-C
@@ -109,8 +108,13 @@ void comStep(char newStep)
     			PWM_DTSRCSEL_SM0SEL23(0) | PWM_DTSRCSEL_SM1SEL23(1) | PWM_DTSRCSEL_SM2SEL23(2));
 #endif
 
-    	//Mask phase to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase A to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x110);
+    	} else {
+    		//Mask phase A to float and phase B low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x310);
+    	}
         break;
 
     case 6: // A-C
@@ -126,7 +130,13 @@ void comStep(char newStep)
 #endif
 
     	//Mask phase to float
-    	modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+    	if (eepromBuffer.comp_pwm) {
+    		//Mask phase B to float
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x220);
+    	} else {
+    		//Mask phase B to float and phase A low FET off
+    		modifyReg16(&FLEXPWM0->MASK, 0x777, 0x320);
+    	}
         break;
     }
 
