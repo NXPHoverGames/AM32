@@ -221,15 +221,6 @@ void initDMA_UART(void)
  */
 void enableDMA_DshotPWM(void)
 {
-	//Enable major count complete interrupt
-	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_CSR, DMA_TCD_CSR_INTMAJOR_MASK, DMA_TCD_CSR_INTMAJOR(1));
-
-	//Enable DMA hardware request
-	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, DMA_CH_CSR_ERQ(1));
-
-	//Clear DMA channel 0 interrupt flag
-	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_INT, 0, DMA_CH_INT_INT(1));
-
 	//Set the major loop count and addresses again to prevent unintended DMA request from CTIMER match register
 	//Set current and beginning major loop count to 8
 	DMA0->CH[DMA_CH_DshotPWM].TCD_CITER_ELINKNO = DMA_TCD_CITER_ELINKNO_CITER(buffersize / 2);
@@ -247,6 +238,16 @@ void enableDMA_DshotPWM(void)
 
 	//Set destination address
 	DMA0->CH[DMA_CH_DshotPWM].TCD_DADDR = (uint32_t)&dma_buffer;
+
+	//Enable major count complete interrupt
+	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_CSR, DMA_TCD_CSR_INTMAJOR_MASK, DMA_TCD_CSR_INTMAJOR(1));
+
+	//Clear DMA channel 0 interrupt flag
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_INT, 0, DMA_CH_INT_INT(1));
+
+	//Enable DMA hardware request
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, DMA_CH_CSR_ERQ(1));
+
 }
 
 void enableDMA_ADC(void)
@@ -275,7 +276,7 @@ void doDshotCorrection(void)
 	if (buffersize > 3) {
 		//TODO check for roll-over?
 		int sum = dma_buffer[1];
-		for (int i = 1; i < buffersize; i++) {
+		for (int i = 1; i < (buffersize / 2); i++) {
 			sum += dma_buffer[(i << 1) + 1];
 
 			dma_buffer[(i << 1)] += sum;

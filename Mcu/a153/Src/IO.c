@@ -19,17 +19,17 @@ void receiveDshotDma()
 	out_put = 0;
 
 	//Set prescaler
-	CTIMER0->PR = ic_timer_prescaler;
+//	CTIMER0->PR = ic_timer_prescaler;
 
 	//Resets PWM/Dshot timer to 0
 	resetInputCaptureTimer();
 //	enableDshotPWMTimer();
 
 //	Set PWM/Dshot input pin to timer capture/compare input
-//	And enable input buffer and pull-down resistor
+//	And enable input buffer and pull-up resistor
 	modifyReg32(&INPUT_PIN_PORT->PCR[INPUT_PIN],
 			PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(1));
 
 	//Enable Dshot DMA
 	//enables interrupt and hardware request
@@ -84,10 +84,10 @@ uint8_t getInputPinState()
 	uint8_t readPinData = INPUT_PIN_GPIO->PDR[INPUT_PIN];
 
 	//Set PWM/Dshot input pin to timer capture/compare input
-	//And enable input buffer and pull-down resistor
+	//And enable input buffer and pull-up resistor
 	modifyReg32(&INPUT_PIN_PORT->PCR[INPUT_PIN],
 			PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(1));
 
 	return readPinData;
 }

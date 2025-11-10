@@ -46,7 +46,7 @@ void MX_IWDG_Init(void)
  * @brief	Initializes CTIMER0 as a capture/compare timer to decode input PWM or input Dshot for setting the throttle.
  * 			This timer calls a DMA request at a match0 event.
  * 			The timer captures the rising and falling edge of the input pin.
- * 			On the falling edge the timer is cleared, which causes a match0 event.
+ * 			On the falling edge the timer is cleared, which causes a match0 event that triggers a DMA0 request.
  * 			The DMA then transfers the capture 1 and capture 2 counter values to the DMA buffer.
  * 			To reconstruct the Dshot/PWM data a correction is done after the DMA buffer is fully filled.
  */
@@ -73,10 +73,10 @@ void initDshotPWMTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set PWM/Dshot input pin to timer capture/compare input
-	//And enable input buffer and pull-down resistor
+	//And enable input buffer and pull-up resistor
 	modifyReg32(&INPUT_PIN_PORT->PCR[INPUT_PIN],
 			PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(0));
+			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(1));
 
 	//Set PWM/Dshot input pin as TIMER0 capture input for capture register 1 and 2
 	INPUTMUX0->CTIMER0CAP[1] = INPUT_PIN_CAPTURE_INP;
@@ -251,9 +251,9 @@ void initTenKHzTimer(void)
 void enableDshotPWMTimer(void)
 {
 	//Reset timer counter
-	CTIMER0->TCR |= CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER0->TCR, 0, CTIMER_TCR_CRST(1));
 	delayMicros(2);
-	CTIMER0->TCR &= ~CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CRST_MASK, 0);
 
 	//Enable timer counter
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
@@ -262,9 +262,9 @@ void enableDshotPWMTimer(void)
 void enableComTimer(void)
 {
 	//Reset timer counter
-	CTIMER1->TCR |= CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER1->TCR, 0, CTIMER_TCR_CRST(1));
 	delayMicros(2);
-	CTIMER1->TCR &= ~CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER1->TCR, CTIMER_TCR_CRST_MASK, 0);
 
 	//Enable CTIMER1
 	modifyReg32(&CTIMER1->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
@@ -273,9 +273,9 @@ void enableComTimer(void)
 void enableIntervalTimer(void)
 {
 	//Reset timer counter
-	CTIMER2->TCR |= CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER2->TCR, 0, CTIMER_TCR_CRST(1));
 	delayMicros(2);
-	CTIMER2->TCR &= ~CTIMER_TCR_CRST(1);
+	modifyReg32(&CTIMER2->TCR, CTIMER_TCR_CRST_MASK, 0);
 
 	//Enable CTIMER2
 	modifyReg32(&CTIMER2->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
@@ -303,7 +303,7 @@ inline void resetInputCaptureTimer(void)
 {
 	//Reset timer counter
 	modifyReg32(&CTIMER0->TCR, 0, CTIMER_TCR_CRST(1));
-//	delayMicros(2);
+	delayMicros(2);
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CRST_MASK, 0);
 }
 

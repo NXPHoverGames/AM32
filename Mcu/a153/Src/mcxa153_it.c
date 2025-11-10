@@ -94,6 +94,9 @@ void LPTMR0_IRQHandler(void)
  */
 void DMA_CH0_IRQHandler(void)
 {
+	//Disable DMA hardware request
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, 0);
+
 	if (armed && dshot_telemetry) {
 	    if (out_put) {
 	        receiveDshotDma();
