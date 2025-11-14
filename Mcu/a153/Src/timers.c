@@ -8,6 +8,8 @@
 #include "timers.h"
 #include "functions.h"
 
+//#define DEBUGMODE
+
 /*
  * @brief 	Initializes the Watchdog which resets the chip after a timeout of 2 seconds
  * 			By default the Watchdog timer runs on a 1MHz clock
@@ -31,8 +33,13 @@ void MX_IWDG_Init(void)
 	//Set the watchdog timeout to 2s
 	WWDT0->TC = WWDT_TC_COUNT(2000000 >> 2);	//divide by 4 cause of fixed clock divider of 4 inside WWDT
 
+#ifdef DEBUGMODE
+	//Set watchdog timeout to cause an interrupt
+	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDRESET_MASK, 0);
+#else
 	//Set watchdog timeout to cause a reset
 	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDRESET_MASK, WWDT_MOD_WDRESET(1));
+#endif
 
 	//Enable watchdog timer
 	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDEN_MASK, WWDT_MOD_WDEN(1));
@@ -83,10 +90,17 @@ void initDshotPWMTimer(void)
 	INPUTMUX0->CTIMER0CAP[2] = INPUT_PIN_CAPTURE_INP;
 
 	//Set prescaler value
-	CTIMER0->PR = 0;
+	CTIMER0->PR = 0; //30; //0; //CPU_FREQUENCY_MHZ / 4;	//TODO change back to 0
 
 	//Set match0 value to zero
 	CTIMER0->MR[0] = 0;
+
+	//Set match1 value to higher then the minimum Dshot300 frame time which is around 53us, so take at least 53us.
+	//Set to 6000 => approximately 60us.
+	CTIMER0->MR[1] = 10000 / (CTIMER0->PR + 1);
+
+	//Reset timer and enable interrupt on Match1 event
+	modifyReg32(&CTIMER0->MCR, 0, CTIMER_MCR_MR1I(1) | CTIMER_MCR_MR1R(1));
 
 	//Configure capture control register so capture value register is loaded on CR1 rising edge and CR2 falling edge
 	modifyReg32(&CTIMER0->CCR,
@@ -97,6 +111,9 @@ void initDshotPWMTimer(void)
 	modifyReg32(&CTIMER0->CTCR,
 			CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
 			CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(5));
+
+	//Set interrupt priority
+	__NVIC_SetPriority(CTIMER0_IRQn, 1);	//set interrupt priority to 0
 }
 
 /*
@@ -257,6 +274,9 @@ void enableDshotPWMTimer(void)
 
 	//Enable timer counter
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
+
+	//Enable interrupt
+	__NVIC_EnableIRQ(CTIMER0_IRQn);
 }
 
 void enableComTimer(void)

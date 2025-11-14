@@ -14,8 +14,10 @@
  * @brief 	Reloads the watchdog timer counter
  */
 #define RELOAD_WATCHDOG_COUNTER() { \
+	__disable_irq(); \
 	WWDT0->FEED = WWDT_FEED_FEED(0xaa); \
 	WWDT0->FEED = WWDT_FEED_FEED(0x55); \
+	__enable_irq(); \
 }
 
 /*

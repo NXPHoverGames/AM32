@@ -407,7 +407,7 @@ void loadEEpromSettings()
     eepromBuffer.limits.current = 102;
     eepromBuffer.sine_mode_power = 6;
     eepromBuffer.telemetry_on_interval = 1;
-    eepromBuffer.input_type = 2;
+    eepromBuffer.input_type = 0;	//Sets Dshot input
 
     eepromBuffer.tune[0] = 0xff;	//Turn off BJ tune
 //    eepromBuffer.tune[0] = 4;
@@ -558,6 +558,8 @@ void loadEEpromSettings()
             eepromBuffer.sine_mode_power = 5;
         }
 
+        GPIO3->PTOR = (1 << 27);	//ENC_A
+
         if (eepromBuffer.input_type < 10) {
             switch (eepromBuffer.input_type) {
             case AUTO_IN:
@@ -615,7 +617,7 @@ void loadEEpromSettings()
 
 void saveEEpromSettings()
 {
-    save_flash_nolib(eepromBuffer.buffer, sizeof(eepromBuffer.buffer), eeprom_address);
+//    save_flash_nolib(eepromBuffer.buffer, sizeof(eepromBuffer.buffer), eeprom_address);
 }
 
 uint16_t getSmoothedCurrent()
@@ -1554,12 +1556,12 @@ static void checkDeviceInfo(void)
 
 int main(void)
 {
-
     initAfterJump();
     checkDeviceInfo();
     initCorePeripherals();
-    enableCorePeripherals();
+//	GPIO3->PTOR = (1 << 27);	//ENC_A
     loadEEpromSettings();
+    enableCorePeripherals();	//TODO set back
 
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || EEPROM_VERSION > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;

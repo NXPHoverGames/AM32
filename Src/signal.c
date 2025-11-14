@@ -130,6 +130,7 @@ void transfercomplete()
         }
     }
 #endif
+
     if (inputSet == 0) {
         detectInput();
         receiveDshotDma();
@@ -226,6 +227,7 @@ void checkDshot()
         inputSet = 1;
     }
 }
+
 void checkServo()
 {
     if (smallestnumber > 200 && smallestnumber < 20000) {

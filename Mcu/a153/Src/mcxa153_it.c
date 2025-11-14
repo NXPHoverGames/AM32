@@ -62,6 +62,56 @@ void CMP1_IRQHandler(void)
 }
 
 /*
+ * @brief Watchdog interrupt handler. Only used in debug mode
+ */
+void WWDT0_IRQHandler(void)
+{
+	//Clear interrupt flag
+	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDTOF_MASK, 0);
+
+	//Do system reset
+	NVIC_SystemReset();
+}
+
+/*
+ * @brief DSHOT CTIMER0 interrupt called when Dshot frame has ended
+ */
+void CTIMER0_IRQHandler(void)
+{
+	uint32_t flags = CTIMER0->IR;
+
+	//Reset Dshot DMA
+//	enableDMA_DshotPWM();
+
+	//Set the major loop count and addresses again to prevent unintended DMA request from CTIMER match register
+	//Set current and beginning major loop count to 8
+	DMA0->CH[DMA_CH_DshotPWM].TCD_CITER_ELINKNO = DMA_TCD_CITER_ELINKNO_CITER(buffersize / 2);
+
+	//Sets the amount of major loop counts after a DMA transfer completes
+	//i.e. the CITER register gets this BITER value after DMA transfer complete
+	DMA0->CH[DMA_CH_DshotPWM].TCD_BITER_ELINKNO = DMA_TCD_BITER_ELINKNO_BITER(buffersize / 2);
+
+	//Set last destination address adjustment to -8 bytes * the number of DMA requests before transfer complete
+	//Adds this value to the destination address when CITER reaches 0 / DMA transfer is complete
+	DMA0->CH[DMA_CH_DshotPWM].TCD_DLAST_SGA = -(8 * (buffersize / 2));
+
+	//Set source address
+	DMA0->CH[DMA_CH_DshotPWM].TCD_SADDR = (uint32_t)&CTIMER0->CR[1];
+
+	//Set destination address
+	DMA0->CH[DMA_CH_DshotPWM].TCD_DADDR = (uint32_t)&dma_buffer;
+
+//	//Enable major count complete interrupt
+//	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_CSR, DMA_TCD_CSR_INTMAJOR_MASK, DMA_TCD_CSR_INTMAJOR(1));
+//
+//	//Clear DMA channel 0 interrupt flag
+//	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_INT, 0, DMA_CH_INT_INT(1));
+
+	//Clear interrupt flags
+	CTIMER0->IR = flags;
+}
+
+/*
  * @brief COM_TIMER interrupt
  */
 void CTIMER1_IRQHandler(void)
@@ -94,8 +144,14 @@ void LPTMR0_IRQHandler(void)
  */
 void DMA_CH0_IRQHandler(void)
 {
-	//Disable DMA hardware request
-	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, 0);
+	//Clear DMA channel 0 interrupt flag
+	DMA0->CH[DMA_CH_DshotPWM].CH_INT = DMA_CH_INT_INT(1);
+
+	//Clear done flag
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, 0, DMA_CH_CSR_DONE(1));
+
+	//Clear DMA error flag
+	DMA0->CH[DMA_CH_DshotPWM].CH_ES = DMA_CH_ES_ERR(1);
 
 	if (armed && dshot_telemetry) {
 	    if (out_put) {
@@ -110,6 +166,9 @@ void DMA_CH0_IRQHandler(void)
 	    return;
 	}
 
+	//Disable DMA hardware request
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, 0);
+
 	//Convert to correct Dshot/PWM timing data format
 	doDshotCorrection();
 
@@ -119,14 +178,8 @@ void DMA_CH0_IRQHandler(void)
 	//Set input_ready so processDshot is called in main loop
 	input_ready = 1;
 
-	//Clear DMA channel 0 interrupt flag
-	DMA0->CH[DMA_CH_DshotPWM].CH_INT = DMA_CH_INT_INT(1);
-
-	//Clear done flag
-	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, 0, DMA_CH_CSR_DONE(1));
-
-	//Clear DMA error flag
-	DMA0->CH[DMA_CH_DshotPWM].CH_ES = DMA_CH_ES_ERR(1);
+	//Enable DMA hardware request
+	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, DMA_CH_CSR_ERQ(1));
 }
 
 /*
