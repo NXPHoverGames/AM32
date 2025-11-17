@@ -59,8 +59,8 @@ static inline uint16_t get_timer_us16(void) {
 #elif defined(ARTERY)
     return UTILITY_TIMER->cval;
 #elif defined(NXP)
-    //Return systick timer count value
-    return SysTick->VAL;
+    //Return nothing since NXP micro-tick works differently
+    return 0;
 #elif defined(WCH)
     return UTILITY_TIMER->CNT>>1;
 #else
@@ -69,83 +69,22 @@ static inline uint16_t get_timer_us16(void) {
 }
 
 /*
-  delay by microseconds, max 65535
+ * @brief 	Delay in micros
  */
-//void delayMicros(uint32_t micros)
-//{
-//#ifdef NXP
-//    const uint32_t cval_start = SysTick->VAL;
-//
-//    //Systick timer counts down so mirror subtraction
-//    while (micros > 0) {
-//    	uint32_t current = SysTick->VAL;
-//    	uint32_t elapsed;
-//
-//    	//Handle wrap-around
-//        if (cval_start >= current) {
-//            elapsed = cval_start - current;
-//        	GPIO3->PTOR = (1 << 27);	//ENC_A
-//        } else {
-//            // Handle wrap-around
-//            elapsed = cval_start + ((uint32_t)SysTick->LOAD - current);
-////            GPIO3->PTOR = (1 << 28); 	//ENC_I
-//        }
-//
-//        if (elapsed >= micros) {
-//            break;
-//        }
-//	}
-//
-//#else
-//    const uint16_t cval_start = get_timer_us16();
-//    while ((uint16_t)(get_timer_us16() - cval_start) < (uint16_t)micros) {
-//    }
-//#endif
-//}
+void delayMicros(uint32_t micros)
+{
+    //Set delay value
+	modifyReg32(&UTICK0->CTRL, UTICK_CTRL_DELAYVAL_MASK, UTICK_CTRL_DELAYVAL(micros));
 
-//void delayMicros(uint32_t micros) {
-//    uint32_t start = SysTick->VAL;           // Current counter value
-//    uint32_t ticks = micros;                     // Since 1 tick = 1 µs at 1 MHz
-//    uint32_t reload = SysTick->LOAD + 1;     // SysTick reload value
-//
-//    while (ticks > 0) {
-//        uint32_t current = SysTick->VAL;
-//        uint32_t elapsed;
-//
-//        if (current <= start) {
-//            elapsed = start - current;
-//            GPIO3->PTOR = (1 << 27);	//ENC_A
-//        } else {
-//            // Counter wrapped around
-//            elapsed = start + (reload - current);
-//        }
-//
-//        if (elapsed >= ticks) {
-////            break;
-//        	//do nothing
-//        }
-//    }
-//}
+	//Wait until micro-tick timer is finished
+	while (!(UTICK0->STAT & UTICK_STAT_INTR_MASK))
+	{
+		//Do nothing
+		__asm volatile ("nop");
+	}
 
-void delayMicros(uint32_t micros) {
-    uint32_t start = SysTick->VAL;
-    uint32_t reload = SysTick->LOAD + 1; // Full range including zero
-    uint32_t elapsed = 0;
-
-    while (elapsed < micros) {
-        uint32_t current = SysTick->VAL;
-
-        if (start >= current) {
-            // Normal case: no wrap
-            elapsed += (start - current);
-            GPIO3->PTOR = (1 << 27);	//ENC_A
-        } else {
-            // Wrap-around occurred
-            elapsed += (start + (reload - current));
-        }
-
-        start = current; // Update start for next iteration
-    }
+	//Clear UTICK interrupt flag
+	UTICK0->STAT = UTICK_STAT_INTR(1);
 }
 
 
@@ -154,9 +93,13 @@ void delayMicros(uint32_t micros) {
  */
 void delayMillis(uint32_t millis)
 {
+#ifdef NXP
+	delayMicros(1000UL * millis);
+#else
     while (millis-- > 0) {
         delayMicros(1000UL);
     }
+#endif
 }
 
 uint8_t update_crc8(uint8_t crc, uint8_t crc_seed)

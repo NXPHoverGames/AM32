@@ -13,8 +13,6 @@ void initCorePeripherals(void)
 
     initGPIO();
 
-//    GPIO3->PTOR = (1 << 27);	//ENC_A
-
 	initFlexPWM();
 
 #ifndef USE_ADC_INPUT
@@ -25,7 +23,7 @@ void initCorePeripherals(void)
 	initComTimer();
 #endif
 	initIntervalTimer();
-	initSystickTimer();
+	initDelayTimer();
 	initTenKHzTimer();
 
 #ifdef USE_ADC
@@ -40,8 +38,6 @@ void initCorePeripherals(void)
 	telem_UART_Init();
 	initDMA_UART();
 #endif
-
-//	GPIO3->PTOR = (1 << 27);	//ENC_A
 
 	NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);	//TODO check if this is needed or what it does
 
@@ -220,9 +216,6 @@ void initGPIO(void)
 
 void enableCorePeripherals()
 {
-	//First enable SysTick timer as its used for delay functions
-	enableSystickTimer();
-
 	//Enable PWM
 	enableFlexPWM();
 
@@ -252,7 +245,6 @@ void enableCorePeripherals()
 #ifndef USE_ADC_INPUT
 	enableDMA_DshotPWM();
 	enableDshotPWMTimer();
-//	GPIO3->PTOR = (1 << 27);	//ENC_A
 #endif
 
 #ifndef BRUSHED_MODE

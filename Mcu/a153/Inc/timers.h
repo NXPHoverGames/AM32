@@ -59,6 +59,7 @@ void initDshotPWMTimer(void);
 void initComTimer(void);
 void initIntervalTimer(void);
 void initSystickTimer(void);
+void initDelayTimer(void);
 void initTenKHzTimer(void);
 
 void enableDshotPWMTimer(void);

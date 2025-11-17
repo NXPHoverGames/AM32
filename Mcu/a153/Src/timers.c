@@ -199,33 +199,23 @@ void initIntervalTimer(void)
 }
 
 /*
- * @brief	Initializes the 24-bit Systick timer to use for the delay functions
- * 			1 systick clock tick = 1us
- * 			Systick counts down
+ * @brief 	Initializes 32-bit micro-tick timer used for delay functions
+ * 			Runs at 1MHz (clock source cannot be chosen), 1 tick = 1us
+ * 			micro-tick timer counts down
  */
-void initSystickTimer(void)
+void initDelayTimer(void)
 {
 	//Unlock clock configuration registers access
 	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
 
-	//Select functional clock for Systick timer to 1MHz clock (CLK_1M)
-	modifyReg32(&MRCC0->MRCC_SYSTICK_CLKSEL, MRCC_MRCC_SYSTICK_CLKSEL_MUX_MASK, MRCC_MRCC_SYSTICK_CLKSEL_MUX(1));	//TODO set to 1 CLK_1M
+	//Enable peripheral clocks
+	modifyReg32(&MRCC0->MRCC_GLB_CC0, MRCC_MRCC_GLB_CC0_UTICK0_MASK, MRCC_MRCC_GLB_CC0_UTICK0(1));
 
-	//Enable Systick timer
-	//And set Systick clock divider to /1
-	modifyReg32(&MRCC0->MRCC_SYSTICK_CLKDIV,
-			MRCC_MRCC_SYSTICK_CLKDIV_DIV_MASK | MRCC_MRCC_SYSTICK_CLKDIV_HALT(1),
-			MRCC_MRCC_SYSTICK_CLKDIV_DIV(0));
+	//Release peripherals from reset
+	modifyReg32(&MRCC0->MRCC_GLB_RST0, MRCC_MRCC_GLB_RST0_UTICK0_MASK, MRCC_MRCC_GLB_RST0_UTICK0(1));
 
 	//Freeze clock configuration registers access
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
-
-	//Set Systick clock to external clock that is selected in MRCC_SYSTICK_CLKSEL
-	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, 0);
-//	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, SysTick_CTRL_CLKSOURCE_Msk);
-
-	//Set Systick reload value to max
-	SysTick->LOAD = 0xffffff;
 }
 
 /*
@@ -296,12 +286,6 @@ void enableIntervalTimer(void)
 
 	//Enable CTIMER2
 	modifyReg32(&CTIMER2->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
-}
-
-void enableSystickTimer(void)
-{
-	//Enable Systick timer
-	modifyReg32(&SysTick->CTRL, 0, SysTick_CTRL_ENABLE_Msk);
 }
 
 void enableTenKHzTimer(void)
