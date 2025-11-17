@@ -112,8 +112,9 @@ void initDshotPWMTimer(void)
 			CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
 			CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(5));
 
-	//Set interrupt priority
-	__NVIC_SetPriority(CTIMER0_IRQn, 1);	//set interrupt priority to 0
+	//Enable interrupt
+	__NVIC_SetPriority(CTIMER0_IRQn, 1);	//set interrupt priority to 1
+	__NVIC_EnableIRQ(CTIMER0_IRQn);
 }
 
 /*
@@ -195,7 +196,6 @@ void initIntervalTimer(void)
 
 	//Set CTIMER2 prescaler to /6
 	CTIMER2->PR = 5;
-//	CTIMER2->PR = 11;	//Set to 1MHz. This causes the motor to not stop spinning faster.
 }
 
 /*
@@ -209,7 +209,7 @@ void initSystickTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, SYSCON_CLKUNLOCK_UNLOCK(1), 0);
 
 	//Select functional clock for Systick timer to 1MHz clock (CLK_1M)
-	modifyReg32(&MRCC0->MRCC_SYSTICK_CLKSEL, MRCC_MRCC_SYSTICK_CLKSEL_MUX_MASK, MRCC_MRCC_SYSTICK_CLKSEL_MUX(1));
+	modifyReg32(&MRCC0->MRCC_SYSTICK_CLKSEL, MRCC_MRCC_SYSTICK_CLKSEL_MUX_MASK, MRCC_MRCC_SYSTICK_CLKSEL_MUX(1));	//TODO set to 1 CLK_1M
 
 	//Enable Systick timer
 	//And set Systick clock divider to /1
@@ -220,9 +220,9 @@ void initSystickTimer(void)
 	//Freeze clock configuration registers access
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
-	//Set Systick clock to clock selected in MRCC_SYSTICK_CLKSEL
-//	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, (1 << SysTick_CTRL_CLKSOURCE_Pos));
+	//Set Systick clock to external clock that is selected in MRCC_SYSTICK_CLKSEL
 	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, 0);
+//	modifyReg32(&SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk, SysTick_CTRL_CLKSOURCE_Msk);
 
 	//Set Systick reload value to max
 	SysTick->LOAD = 0xffffff;
@@ -274,9 +274,6 @@ void enableDshotPWMTimer(void)
 
 	//Enable timer counter
 	modifyReg32(&CTIMER0->TCR, CTIMER_TCR_CEN_MASK, CTIMER_TCR_CEN(1));
-
-	//Enable interrupt
-	__NVIC_EnableIRQ(CTIMER0_IRQn);
 }
 
 void enableComTimer(void)

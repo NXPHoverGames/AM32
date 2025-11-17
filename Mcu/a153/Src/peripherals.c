@@ -13,6 +13,8 @@ void initCorePeripherals(void)
 
     initGPIO();
 
+//    GPIO3->PTOR = (1 << 27);	//ENC_A
+
 	initFlexPWM();
 
 #ifndef USE_ADC_INPUT
@@ -39,6 +41,8 @@ void initCorePeripherals(void)
 	initDMA_UART();
 #endif
 
+//	GPIO3->PTOR = (1 << 27);	//ENC_A
+
 	NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);	//TODO check if this is needed or what it does
 
 }
@@ -51,6 +55,7 @@ void initAfterJump()
 /*
  * @brief 	Configures the core voltage to 1.1V. Sets the Fast Internal Reference Clock (FIRC) to 192MHz.
  * 			Sets MUX to select FIRC as MAIN_CLK. Sets system clock divider to /2, so CPU_CLK and SYSTEM_CLK are 96MHz.
+ * 			Also enables SIRC so 12MHz and 1MHz can be sourced to peripherals.
  */
 void SystemClock_Config(void)
 {
@@ -93,14 +98,13 @@ void SystemClock_Config(void)
 
 	//Set System clock divider to 2 to make the CPU and SYSTEM clock 96MHz (this is the max clock) divider value = DIV + 1
 	modifyReg32(&SYSCON->AHBCLKDIV, SYSCON_AHBCLKDIV_DIV_MASK, SYSCON_AHBCLKDIV_DIV(1));
-//	modifyReg32(&SYSCON->AHBCLKDIV, SYSCON_AHBCLKDIV_DIV_MASK, SYSCON_AHBCLKDIV_DIV(0));
+
+	/* Config FIRC */
+	//Set the Fast Internal Reference Clock (FIRC) to 192MHz
+	modifyReg32(&SCG0->FIRCCFG, SCG_FIRCCFG_FREQ_SEL_MASK, SCG_FIRCCFG_FREQ_SEL(7));
 
 	//Unlock FIRC control status register
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_LK_MASK, 0);
-
-	//Set the Fast Internal Reference Clock (FIRC) to 192MHz
-	modifyReg32(&SCG0->FIRCCFG, SCG_FIRCCFG_FREQ_SEL_MASK, SCG_FIRCCFG_FREQ_SEL(7));
-//	modifyReg32(&SCG0->FIRCCFG, SCG_FIRCCFG_FREQ_SEL_MASK, SCG_FIRCCFG_FREQ_SEL(5));
 
 	//Enable FRO_HF clock to peripherals
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_FIRC_FCLK_PERIPH_EN_MASK, SCG_FIRCCSR_FIRC_FCLK_PERIPH_EN(1));
@@ -110,6 +114,12 @@ void SystemClock_Config(void)
 
 	//Set that FIRC is disabled when in deep sleep mode
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_FIRCSTEN_MASK, SCG_FIRCCSR_FIRCSTEN(0));
+
+	//Wait for the FIRC clock source to be valid
+	while (!((SCG0->FIRCCSR & SCG_FIRCCSR_FIRCVLD_MASK) >> SCG_FIRCCSR_FIRCVLD_SHIFT)) {
+		//Do nothing
+		__asm volatile ("nop");
+	}
 
 	//Select FIRC as MAIN_CLK clock source
 	modifyReg32(&SCG0->RCCR, SCG_RCCR_SCS_MASK, SCG_RCCR_SCS(3));
@@ -123,14 +133,27 @@ void SystemClock_Config(void)
 	//Enable FIRC clock source
 	modifyReg32(&SCG0->FIRCCSR, SCG_FIRCCSR_FIRCEN_MASK, SCG_FIRCCSR_FIRCEN(1));
 
-	//Wait for the FIRC clock source to be valid
-	while (!((SCG0->FIRCCSR & SCG_FIRCCSR_FIRCVLD_MASK) >> SCG_FIRCCSR_FIRCVLD_SHIFT)) {
+	//Lock FIRC control status register
+	modifyReg32(&SCG0->FIRCCSR, 0, SCG_FIRCCSR_LK_MASK);
+
+	/* Config SIRC */
+	//Unlock SIRC control status register
+	modifyReg32(&SCG0->SIRCCSR, SCG_SIRCCSR_LK_MASK, 0);
+
+	//Set that SIRC is disabled in deep sleep mode
+	modifyReg32(&SCG0->SIRCCSR, SCG_SIRCCSR_SIRCSTEN_MASK, 0);
+
+	//Enable SIRC clock to peripherals
+	modifyReg32(&SCG0->SIRCCSR, SCG_SIRCCSR_SIRC_CLK_PERIPH_EN_MASK, SCG_SIRCCSR_SIRC_CLK_PERIPH_EN(1));
+
+	//Wait for SIRC clock source to be valid
+	while (!((SCG0->SIRCCSR & SCG_SIRCCSR_SIRCVLD_MASK) >> SCG_SIRCCSR_SIRCVLD_SHIFT)) {
 		//Do nothing
 		__asm volatile ("nop");
 	}
 
-	//Lock FIRC control status register
-	modifyReg32(&SCG0->FIRCCSR, 0, SCG_FIRCCSR_LK_MASK);
+	//Lock SIRC control status register
+	modifyReg32(&SCG0->SIRCCSR, 0, SCG_SIRCCSR_LK_MASK);
 }
 
 /*
@@ -227,8 +250,9 @@ void enableCorePeripherals()
 
 	//Enable the timers
 #ifndef USE_ADC_INPUT
-	enableDshotPWMTimer();
 	enableDMA_DshotPWM();
+	enableDshotPWMTimer();
+//	GPIO3->PTOR = (1 << 27);	//ENC_A
 #endif
 
 #ifndef BRUSHED_MODE

@@ -71,36 +71,83 @@ static inline uint16_t get_timer_us16(void) {
 /*
   delay by microseconds, max 65535
  */
-void delayMicros(uint32_t micros)
-{
-#ifdef NXP
-    const uint32_t cval_start = SysTick->VAL;
-    //Systick timer counts down so mirror subtraction
-//    while ((int32_t)(cval_start - get_timer_us16()) < (int32_t) micros) {
+//void delayMicros(uint32_t micros)
+//{
+//#ifdef NXP
+//    const uint32_t cval_start = SysTick->VAL;
+//
+//    //Systick timer counts down so mirror subtraction
+//    while (micros > 0) {
+//    	uint32_t current = SysTick->VAL;
+//    	uint32_t elapsed;
+//
+//    	//Handle wrap-around
+//        if (cval_start >= current) {
+//            elapsed = cval_start - current;
+//        	GPIO3->PTOR = (1 << 27);	//ENC_A
+//        } else {
+//            // Handle wrap-around
+//            elapsed = cval_start + ((uint32_t)SysTick->LOAD - current);
+////            GPIO3->PTOR = (1 << 28); 	//ENC_I
+//        }
+//
+//        if (elapsed >= micros) {
+//            break;
+//        }
+//	}
+//
+//#else
+//    const uint16_t cval_start = get_timer_us16();
+//    while ((uint16_t)(get_timer_us16() - cval_start) < (uint16_t)micros) {
 //    }
+//#endif
+//}
 
-    while (micros > 0) {
-            uint32_t current = SysTick->VAL;
-            uint32_t elapsed;
+//void delayMicros(uint32_t micros) {
+//    uint32_t start = SysTick->VAL;           // Current counter value
+//    uint32_t ticks = micros;                     // Since 1 tick = 1 µs at 1 MHz
+//    uint32_t reload = SysTick->LOAD + 1;     // SysTick reload value
+//
+//    while (ticks > 0) {
+//        uint32_t current = SysTick->VAL;
+//        uint32_t elapsed;
+//
+//        if (current <= start) {
+//            elapsed = start - current;
+//            GPIO3->PTOR = (1 << 27);	//ENC_A
+//        } else {
+//            // Counter wrapped around
+//            elapsed = start + (reload - current);
+//        }
+//
+//        if (elapsed >= ticks) {
+////            break;
+//        	//do nothing
+//        }
+//    }
+//}
 
-            if (cval_start >= current) {
-                elapsed = cval_start - current;
-            } else {
-                // Handle wrap-around
-                elapsed = cval_start + (SysTick->LOAD - current);
-            }
+void delayMicros(uint32_t micros) {
+    uint32_t start = SysTick->VAL;
+    uint32_t reload = SysTick->LOAD + 1; // Full range including zero
+    uint32_t elapsed = 0;
 
-            if (elapsed >= micros) {
-                break;
-            }
+    while (elapsed < micros) {
+        uint32_t current = SysTick->VAL;
+
+        if (start >= current) {
+            // Normal case: no wrap
+            elapsed += (start - current);
+            GPIO3->PTOR = (1 << 27);	//ENC_A
+        } else {
+            // Wrap-around occurred
+            elapsed += (start + (reload - current));
         }
 
-#else
-    const uint16_t cval_start = get_timer_us16();
-    while ((uint16_t)(get_timer_us16() - cval_start) < (uint16_t)micros) {
+        start = current; // Update start for next iteration
     }
-#endif
 }
+
 
 /*
   delay in millis, convenience wrapper around delayMicros

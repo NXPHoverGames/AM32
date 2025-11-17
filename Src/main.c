@@ -558,8 +558,6 @@ void loadEEpromSettings()
             eepromBuffer.sine_mode_power = 5;
         }
 
-        GPIO3->PTOR = (1 << 27);	//ENC_A
-
         if (eepromBuffer.input_type < 10) {
             switch (eepromBuffer.input_type) {
             case AUTO_IN:
@@ -1559,7 +1557,6 @@ int main(void)
     initAfterJump();
     checkDeviceInfo();
     initCorePeripherals();
-//	GPIO3->PTOR = (1 << 27);	//ENC_A
     loadEEpromSettings();
     enableCorePeripherals();	//TODO set back
 
