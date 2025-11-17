@@ -62,26 +62,11 @@ void CMP1_IRQHandler(void)
 }
 
 /*
- * @brief Watchdog interrupt handler. Only used in debug mode
- */
-void WWDT0_IRQHandler(void)
-{
-	//Clear interrupt flag
-	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDTOF_MASK, 0);
-
-	//Do system reset
-	NVIC_SystemReset();
-}
-
-/*
  * @brief DSHOT CTIMER0 interrupt called when Dshot frame has ended
  */
 void CTIMER0_IRQHandler(void)
 {
 	uint32_t flags = CTIMER0->IR;
-
-	//Reset Dshot DMA
-//	enableDMA_DshotPWM();
 
 	//Set the major loop count and addresses again to prevent unintended DMA request from CTIMER match register
 	//Set current and beginning major loop count to 8
@@ -100,12 +85,6 @@ void CTIMER0_IRQHandler(void)
 
 	//Set destination address
 	DMA0->CH[DMA_CH_DshotPWM].TCD_DADDR = (uint32_t)&dma_buffer;
-
-//	//Enable major count complete interrupt
-//	modifyReg16(&DMA0->CH[DMA_CH_DshotPWM].TCD_CSR, DMA_TCD_CSR_INTMAJOR_MASK, DMA_TCD_CSR_INTMAJOR(1));
-//
-//	//Clear DMA channel 0 interrupt flag
-//	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_INT, 0, DMA_CH_INT_INT(1));
 
 	//Clear interrupt flags
 	CTIMER0->IR = flags;

@@ -306,11 +306,14 @@ void doDshotCorrection(void)
 //		}
 
 		int sum = dma_buffer[1];
+		int temp_sum = sum;
 		for (int i = 1; i < (buffersize / 2); i++) {
-			sum += dma_buffer[(i << 1) + 1];
+			temp_sum += dma_buffer[(i << 1) + 1];
 
 			dma_buffer[(i << 1)] += sum;
 			dma_buffer[(i << 1) + 1] += sum;
+
+			sum = temp_sum;
 		}
 	}
 }

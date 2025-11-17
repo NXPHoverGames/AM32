@@ -11,13 +11,29 @@
 #include "main.h"
 
 /*
- * @brief 	Reloads the watchdog timer counter
+ * @brief 	ternary operator result if interrupts are enabled
  */
-#define RELOAD_WATCHDOG_COUNTER() { \
+#define RELOAD_WATCHDOG_COUNTER_ZERO { \
 	__disable_irq(); \
 	WWDT0->FEED = WWDT_FEED_FEED(0xaa); \
 	WWDT0->FEED = WWDT_FEED_FEED(0x55); \
-	__enable_irq(); \
+	__enable_irq();	\
+}
+
+/*
+ * @brief 	ternary operator result if interrupts are disabled
+ */
+#define RELOAD_WATCHDOG_COUNTER_NON_ZERO { \
+	WWDT0->FEED = WWDT_FEED_FEED(0xaa); \
+	WWDT0->FEED = WWDT_FEED_FEED(0x55); \
+}
+
+/*
+ * @brief 	Reloads the watchdog timer counter
+ * 			__get_PRIMASK returns 0 if interrupts are enabled
+ */
+#define RELOAD_WATCHDOG_COUNTER() { \
+	(__get_PRIMASK()) ? (RELOAD_WATCHDOG_COUNTER_NON_ZERO) : (RELOAD_WATCHDOG_COUNTER_ZERO); \
 }
 
 /*

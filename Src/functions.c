@@ -77,11 +77,7 @@ void delayMicros(uint32_t micros)
 	modifyReg32(&UTICK0->CTRL, UTICK_CTRL_DELAYVAL_MASK, UTICK_CTRL_DELAYVAL(micros));
 
 	//Wait until micro-tick timer is finished
-	while (!(UTICK0->STAT & UTICK_STAT_INTR_MASK))
-	{
-		//Do nothing
-		__asm volatile ("nop");
-	}
+	while (!(UTICK0->STAT & UTICK_STAT_INTR_MASK)) {}
 
 	//Clear UTICK interrupt flag
 	UTICK0->STAT = UTICK_STAT_INTR(1);

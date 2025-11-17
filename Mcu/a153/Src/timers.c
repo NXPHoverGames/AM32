@@ -8,8 +8,6 @@
 #include "timers.h"
 #include "functions.h"
 
-//#define DEBUGMODE
-
 /*
  * @brief 	Initializes the Watchdog which resets the chip after a timeout of 2 seconds
  * 			By default the Watchdog timer runs on a 1MHz clock
@@ -33,13 +31,8 @@ void MX_IWDG_Init(void)
 	//Set the watchdog timeout to 2s
 	WWDT0->TC = WWDT_TC_COUNT(2000000 >> 2);	//divide by 4 cause of fixed clock divider of 4 inside WWDT
 
-#ifdef DEBUGMODE
-	//Set watchdog timeout to cause an interrupt
-	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDRESET_MASK, 0);
-#else
 	//Set watchdog timeout to cause a reset
 	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDRESET_MASK, WWDT_MOD_WDRESET(1));
-#endif
 
 	//Enable watchdog timer
 	modifyReg32(&WWDT0->MOD, WWDT_MOD_WDEN_MASK, WWDT_MOD_WDEN(1));
