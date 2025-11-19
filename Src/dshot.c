@@ -84,6 +84,7 @@ void computeDshotDMA()
             signaltimeout = 0;
             dshot_goodcounts++;
             if (dpulse[11] == 1) {
+//            if (dpulse[10] == 1) {	//TODO remove this
                 send_telemetry = 1;
             }
             if(programming_mode > 0){  
@@ -277,9 +278,8 @@ void make_dshot_package(uint16_t com_time)
 #else
     gcr[1 + buffer_padding] = 128;
     for (int i = 19; i >= 0; i--) { // each digit in gcrnumber
-        gcr[buffer_padding + 20 - i + 1] = ((((gcrnumber & 1 << i)) >> i) ^ (gcr[buffer_padding + 20 - i] >> 7))
-            << 7; // exclusive ored with number before it multiplied by 64 to match
-                  // output timer.
+    	// exclusive ored with number before it multiplied by 64 to match output timer.
+        gcr[buffer_padding + 20 - i + 1] = ((((gcrnumber & 1 << i)) >> i) ^ (gcr[buffer_padding + 20 - i] >> 7)) << 7;
     }
     gcr[buffer_padding] = 0;
 #endif

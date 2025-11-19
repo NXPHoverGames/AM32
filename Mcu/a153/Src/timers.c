@@ -73,17 +73,17 @@ void initDshotPWMTimer(void)
 	modifyReg32(&SYSCON->CLKUNLOCK, 0, SYSCON_CLKUNLOCK_UNLOCK(1));
 
 	//Set PWM/Dshot input pin to timer capture/compare input
-	//And enable input buffer and pull-up resistor
+	//Enable input buffer and disable pull-up/down resistor
 	modifyReg32(&INPUT_PIN_PORT->PCR[INPUT_PIN],
 			PORT_PCR_MUX_MASK | PORT_PCR_IBE_MASK | PORT_PCR_PE_MASK | PORT_PCR_PS_MASK,
-			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(1) | PORT_PCR_PS(1));
+			PORT_PCR_MUX(INPUT_PIN_ALT_FUNC) | PORT_PCR_IBE(1) | PORT_PCR_PE(0) | PORT_PCR_PS(1));
 
 	//Set PWM/Dshot input pin as TIMER0 capture input for capture register 1 and 2
 	INPUTMUX0->CTIMER0CAP[1] = INPUT_PIN_CAPTURE_INP;
 	INPUTMUX0->CTIMER0CAP[2] = INPUT_PIN_CAPTURE_INP;
 
 	//Set prescaler value
-	CTIMER0->PR = 0; //30; //0; //CPU_FREQUENCY_MHZ / 4;	//TODO change back to 0
+	CTIMER0->PR = 0;
 
 	//Set match0 value to zero
 	CTIMER0->MR[0] = 0;
@@ -97,13 +97,23 @@ void initDshotPWMTimer(void)
 
 	//Configure capture control register so capture value register is loaded on CR1 rising edge and CR2 falling edge
 	modifyReg32(&CTIMER0->CCR,
-			CTIMER_CCR_CAP1RE_MASK | CTIMER_CCR_CAP2FE_MASK,
+			CTIMER_CCR_CAP1RE_MASK | CTIMER_CCR_CAP2RE_MASK | CTIMER_CCR_CAP1FE_MASK | CTIMER_CCR_CAP2FE_MASK,
 			CTIMER_CCR_CAP1RE(1) | CTIMER_CCR_CAP2FE(1));
 
-	//Clear timer counter on capture channel 1 falling edge
+	//Clear timer counter on capture channel 2 falling edge
 	modifyReg32(&CTIMER0->CTCR,
 			CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
 			CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(5));
+
+	//Configure capture control register so capture value register is loaded on CR1 falling edge and CR2 rising edge
+//	modifyReg32(&CTIMER0->CCR,
+//			CTIMER_CCR_CAP2RE_MASK | CTIMER_CCR_CAP1FE_MASK,
+//			CTIMER_CCR_CAP2RE(1) | CTIMER_CCR_CAP1FE(1));
+//
+//	//Clear timer counter on capture channel 2 rising edge
+//	modifyReg32(&CTIMER0->CTCR,
+//			CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
+//			CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(4));
 
 	//Enable interrupt
 	__NVIC_SetPriority(CTIMER0_IRQn, 1);	//set interrupt priority to 1

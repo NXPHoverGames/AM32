@@ -274,39 +274,9 @@ void doDshotCorrection(void)
 {
 	//If larger than 3 it must be Dshot. PWM input does not need correction
 	if (buffersize > 3) {
-		//TODO check for roll-over?
-		//Compute average
-//		uint32_t dma_avg = 0;
-//		uint32_t tmp_buffer[64];
-//
-//		for (int i = 0; i < buffersize; i++) {
-//			dma_avg += dma_buffer[i];
-//			tmp_buffer[i] = dma_buffer[i];	//Copy to temporary buffer
-//		}
-//		dma_avg = dma_avg / buffersize;
-//
-//		//Check where start of dshot timing is
-//		for (int i = 0; i < (buffersize / 2); i+=2) {
-//			//If larger than the average, it is the start
-//			if (dma_buffer[i] > dma_avg) {
-//				//Move dshot start to beginning of array
-//				for (int j = 0; j < buffersize; j++) {
-//					dma_buffer[j] = tmp_buffer[i];
-//
-//					//Increment tmp_buffer index and compensate for roll-over
-//					i++;
-//					if (i >= buffersize) {
-//						i = 0;
-//					}
-//				}
-//
-//				//Go out of loop
-//				break;
-//			}
-//		}
-
 		int sum = dma_buffer[1];
 		int temp_sum = sum;
+
 		for (int i = 1; i < (buffersize / 2); i++) {
 			temp_sum += dma_buffer[(i << 1) + 1];
 

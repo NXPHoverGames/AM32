@@ -27,6 +27,13 @@ extern uint32_t average_interval;
 
 extern volatile char input_ready;
 
+volatile int signal_pin_high_count = 0;
+volatile int is_inverted_dshot = 0;
+extern char inputSet;
+extern uint16_t zero_input_count;
+extern uint32_t average_packet_length;
+extern uint8_t average_count;
+
 /*
  * @brief 	Comparator 0 interrupt handler. Is called after a compare event has occurred.
  */
@@ -86,6 +93,44 @@ void CTIMER0_IRQHandler(void)
 	//Set destination address
 	DMA0->CH[DMA_CH_DshotPWM].TCD_DADDR = (uint32_t)&dma_buffer;
 
+	//Set latest capture 1 value to counter value to prevent it being skipped
+	modifyReg32(&CTIMER0->TC, CTIMER_TC_TCVAL_MASK, CTIMER_TC_TCVAL(CTIMER0->CR[1]));
+
+	//Check for inverted Dshot
+	if (!armed) {
+		if (is_inverted_dshot == 0) {
+			//Check if signal pin is high
+			if (getInputPinState()) {
+				//Do average filter
+				signal_pin_high_count++;
+				if (signal_pin_high_count > 100) {
+					is_inverted_dshot = 1;
+
+					//Configure CTIMER
+					//Configure capture control register so capture value register is loaded on CR1 falling edge and CR2 rising edge
+					modifyReg32(&CTIMER0->CCR,
+							CTIMER_CCR_CAP1RE_MASK | CTIMER_CCR_CAP2RE_MASK | CTIMER_CCR_CAP1FE_MASK | CTIMER_CCR_CAP2FE_MASK,
+							CTIMER_CCR_CAP2RE(1) | CTIMER_CCR_CAP1FE(1));
+
+					//Clear timer counter on capture channel 2 rising edge
+					modifyReg32(&CTIMER0->CTCR,
+							CTIMER_CTCR_ENCC_MASK | CTIMER_CTCR_SELCC_MASK,
+							CTIMER_CTCR_ENCC(1) | CTIMER_CTCR_SELCC(4));
+
+					//Reset input detect state so it detects inverted Dshot correctly
+					inputSet = 0;
+					armed = 0;
+					average_packet_length = 0;
+					average_count = 0;
+					zero_input_count = 0;
+					ic_timer_prescaler = (CPU_FREQUENCY_MHZ / 8);
+					dshot_frametime_high = 50000;
+					dshot_frametime_low = 0;
+				}
+			}
+		}
+	}
+
 	//Clear interrupt flags
 	CTIMER0->IR = flags;
 }
@@ -131,19 +176,6 @@ void DMA_CH0_IRQHandler(void)
 
 	//Clear DMA error flag
 	DMA0->CH[DMA_CH_DshotPWM].CH_ES = DMA_CH_ES_ERR(1);
-
-	if (armed && dshot_telemetry) {
-	    if (out_put) {
-	        receiveDshotDma();
-	        compute_dshot_flag = 2;
-	    } else {
-	        sendDshotDma();
-	        compute_dshot_flag = 1;
-	    }
-		//Set input_ready so processDshot is called in main loop
-		input_ready = 1;
-	    return;
-	}
 
 	//Disable DMA hardware request
 	modifyReg32(&DMA0->CH[DMA_CH_DshotPWM].CH_CSR, DMA_CH_CSR_ERQ_MASK, 0);
